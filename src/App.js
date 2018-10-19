@@ -32,7 +32,7 @@ class App extends Component {
 
   }
  
-  clicked (a,b) {
+  colorBlink (a,b) {
     var dd = this.state.d;
     dd[a][b] = "white";
     this.setState({
@@ -77,13 +77,20 @@ class App extends Component {
      
  for (let i = 1; i <= this.state.info; i++) {
   setTimeout(() => {
+
+    for (var y=0; y<5; y++) {
+      for (var yy=0; yy<5; yy++) {
+          if (this.state.p[y][yy] > 6){this.changeActiveMedia(y,yy); i-=1; break;}
+      }}
+
+
         var om = 99;
         
         while (om>0) {
               var a2=Math.floor(5*Math.random())
               var b2=Math.floor(5*Math.random())
               if (this.state.c[a2][b2] == "red") {
-                  this.clicked (a2,b2);
+                  this.colorBlink (a2,b2);
                   var pp = this.state.p;
                   pp[a2][b2] += 1;
                   this.setState ({
@@ -93,9 +100,6 @@ class App extends Component {
               }
               om -= 1;
         }
-
-
-
   }, 100*i) 
   }
 
@@ -125,13 +129,15 @@ class App extends Component {
     
   }
 
-  changeActiveMedia(){
+  changeActiveMedia(aa,bb){
     var a;
     var b;
     //for (var y=0; y<4; y++) {
      // for (var i=0; i<4; i++) {
         a=Math.floor(5*Math.random())
         b=Math.floor(5*Math.random())
+        if (aa) a = aa;
+        if (bb) b = bb;
         
         if (this.state.p[a][b] > 6) {
           var cc = this.state.c;
