@@ -2,7 +2,7 @@
   text-align: center;
   margin: 0 auto;
   width: 350px;
-
+  position: relative;
   
 }
 
@@ -52,6 +52,7 @@
 
 .riadok {
   width: 350;
+  height: 70px;
 }
 
 .green {
@@ -59,6 +60,12 @@
 }
 .red {
   background-color: crimson;
+}
+.royalblue {
+  background-color: royalblue;
+}
+.violet {
+  background-color: violet;
 }
 
 .reset {
@@ -77,18 +84,37 @@ a:link {
 }
 
 .intro {
-  color:#222;
-  opacity: 0.9;
+  position: relative;
+  color:#000;
+  opacity: s1;
   font-size: 1.5em;
-  padding-bottom: 0.4em;
+  text-align: left;
+  padding-bottom: 0em;
+  margin-bottom: 0.4em;
   padding-top: 0.4em;
 }
 
+.version {
+  text-align: right;
+  position: absolute;
+  bottom: 0px;
+  right: 1px;
+  float: right;
+  opacity: 1;
+  color: black;
+  border: 1px solid blue;
+  padding: 2px 7px 6px 7px;
+  background-color: azure;
+  line-height: 1.1em;
+  margin-right: 1px;
+
+}
 .difficulty{
+  position: relative;
   font-size: 1.7em;
   padding-left: 1px;
   padding-bottom: 0.1em;
-  margin-top: 1em;
+  margin-top: 0em;
   text-align: left;
 }
 .difficultyButton{
@@ -98,7 +124,24 @@ a:link {
   font-weight: 300;
 }
 
+.autoplay {
+  float: right;
+  font-size: smaller;
+  
+}
+.autoplay input {
+  padding: 10px;
+  margin-left: 8px;
+  bottom: 1px;
+}
 
+.rangespan {
+ float: right; 
+ position: absolute;
+ right: 125px;
+ bottom: 9px;
+ 
+}
 
   .vlcek {
     float: right; font-size: 0.6em;
