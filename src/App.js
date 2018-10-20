@@ -56,6 +56,7 @@ class App extends Component {
       black:16,
       orchid:0,
       silver:0,
+      queue = [],
     }
     this.boxClicked = this.boxClicked.bind(this)
     this.me = this.me.bind(this)
@@ -378,6 +379,7 @@ class App extends Component {
     })
   }  
    }
+   if (Math.random()<0.002) {this.updateGraph()}
 
 
     var a;

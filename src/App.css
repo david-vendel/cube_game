@@ -43,7 +43,9 @@
   text-align:center;
   padding-top: 5px;
   box-sizing: border-box;
-  font-size: 2em;
+  font-size: 3.3em;  
+  font-family: 'icomoon', cursive;
+  
 }
 
 .button:hover {
@@ -53,6 +55,7 @@
 .riadok {
   width: 350;
   height: 70px;
+  font-family: 'icomoon', cursive;
 }
 
 .green {
@@ -174,4 +177,24 @@ a:link {
   position: absolute;
   text-align: center;
   
+}
+
+
+/*font
+*/
+body {
+ 
+}
+.heading {
+  font-weight: 700;
+}
+.subheading {
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: 'icomoon';
+  src: url('./fonts/icomoon.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
