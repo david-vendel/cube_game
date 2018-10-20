@@ -15,9 +15,17 @@ class App extends Component {
       var version = localStorage.getItem('version');
 
       var c = Array(sizey).fill().map(_ => 
-        Array(sizex).fill().map(_ => "red" ) );
+        Array(sizex).fill().map(_ => "" ) );
         c[1][1] = "limegreen";
+        c[0][1] = "limegreen";
+        c[1][0] = "limegreen";
+        c[0][0] = "limegreen";
         
+        c[3][3] = "red";
+        c[3][4] = "red";
+        c[4][3] = "re";
+        c[4][4] = "red";
+
         console.log(c)
 
     this.state = {
@@ -26,11 +34,11 @@ class App extends Component {
       royalblue:1,
       violet:1,
       p : Array(sizey).fill().map(_ => 
-        Array(sizex).fill().map(_ => Math.ceil(5*Math.random()) ) ),  
+        Array(sizex).fill().map(_ => 0) ),  
         c,
           
           d: Array(sizey).fill().map(_ => 
-            Array(sizex).fill().map(_ => "black" ) ), 
+            Array(sizex).fill().map(_ => "white" ) ), 
       easy : "yellow",
       medium : "white",
       hard : "white",
@@ -44,7 +52,8 @@ class App extends Component {
       version : version,
       counting: 1,
       autoplay: false,
-      speed:100
+      speed:100,
+      black:16
     }
     this.boxClicked = this.boxClicked.bind(this)
     this.me = this.me.bind(this)
@@ -362,7 +371,7 @@ class App extends Component {
 
      //   }
      // }
-
+     var black = 0;
      var green = 0;
      var red=0;
      var royalblue=0;
@@ -372,7 +381,7 @@ class App extends Component {
     for (var r=0; r<this.state.sizey; r++){
       for (var s=0; s<this.state.sizex; s++)
         {
-         
+          if (this.state.c[r][s] == "black") {black += 1}
           if (this.state.c[r][s] == "limegreen") {green += 1}
           if (this.state.c[r][s] == "red") {red += 1}
           if (this.state.c[r][s] == "royalblue") {royalblue += 1}
@@ -384,7 +393,8 @@ class App extends Component {
       green,
       royalblue,
       violet,
-      red
+      red,
+      black
     })
 
   }
@@ -546,7 +556,9 @@ class App extends Component {
           var c = Array(y).fill().map(_ => 
             Array(x).fill().map(_ => "red" ) );
             c[1][1] = "limegreen";
-           
+            c[0][1] = "limegreen";
+            c[1][0] = "limegreen";
+            c[0][0] = "limegreen";
             console.log(c)
 
 
@@ -565,22 +577,40 @@ class App extends Component {
     
     else {
       var c = Array(5).fill().map(_ => 
-        Array(5).fill().map(_ => "red" ) );
-        c[1][1] = "limegreen";
-       
-        console.log(c)
+        Array(5).fill().map(_ => "black" ) );
+            c[1][1] = "limegreen";
+            c[0][1] = "limegreen";
+            c[1][0] = "limegreen";
+            c[0][0] = "limegreen";
+            c[3][3] = "red";
+            c[3][4] = "red";
+            c[4][3] = "red";
+            c[4][4] = "red";
+           
+            var d = Array(5).fill().map(_ => 
+              Array(5).fill().map(_ => "black" ) );
+
+              var p = Array(5).fill().map(_ => 
+                Array(5).fill().map(_ => 0) );
+                   p[1][1] = Math.ceil(5*Math.random())
+                   p[0][1] = Math.ceil(5*Math.random())
+                    p[1][0] = Math.ceil(5*Math.random())
+                    p[0][0] = Math.ceil(5*Math.random())
+                    p[3][3] = 1
+                    p[3][4] = Math.ceil(5*Math.random())
+                    p[4][3] = Math.ceil(5*Math.random())
+                    p[4][4] = Math.ceil(5*Math.random())  
+        
 
 
       this.setState ({
         sizex:5,
         sizey:5,
         version:"Big",
-        p : Array(5).fill().map(_ => 
-          Array(5).fill().map(_ => Math.ceil(5*Math.random()) ) ),  
+        
           c,
-            
-          d: Array(5).fill().map(_ => 
-            Array(5).fill().map(_ => "black" ) ), 
+            p,
+          d, 
       })
     }
 
@@ -697,6 +727,7 @@ class App extends Component {
         <div style={{height:18, width:(70/this.state.sizey)*this.state.red}} className="stlpec red"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.royalblue}} className="stlpec royalblue"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.violet}} className="stlpec violet"></div>
+        <div style={{height:18, width:(70/this.state.sizey)*this.state.black}} className="stlpec black"></div>
         </div>
         <a href = "">
         <div  className = "reset">
