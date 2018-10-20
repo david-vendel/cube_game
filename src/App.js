@@ -53,7 +53,9 @@ class App extends Component {
       counting: 1,
       autoplay: false,
       speed:100,
-      black:16
+      black:16,
+      orchid:0,
+      silver:0,
     }
     this.boxClicked = this.boxClicked.bind(this)
     this.me = this.me.bind(this)
@@ -91,9 +93,52 @@ class App extends Component {
       })
     }, 100)
 
+  
+
+    this.updateGraph()
+   
+  }
+
+
+  updateGraph () {
+    
+    var black = 0;
+    var green = 0;
+    var red=0;
+    var silver=0;
+    var royalblue=0;
+    var violet=0;
+    var orchid=0;
+    for (var r=0; r<this.state.sizey; r++){
+      for (var s=0; s<this.state.sizex; s++)
+        {
+          if (this.state.c[r][s] == "#111") {black += 1}
+          else if (this.state.c[r][s] == "limegreen") {green += 1}
+          else if (this.state.c[r][s] == "red") {red += 1}
+          else if (this.state.c[r][s] == "royalblue") {royalblue += 1}
+          else if (this.state.c[r][s] == "black") {black += 1}
+          else if (this.state.c[r][s] == "violet") {violet += 1}
+          else if (this.state.c[r][s] == "#eee") {silver += 1}
+          else if (this.state.c[r][s] == "orchid") {orchid += 1}
+
+        }
+    }
+    this.setState({
+      green,
+      royalblue,
+      violet,
+      red,
+      black,
+      silver,
+      orchid
+    })
   }
 
   boxClicked(event, a, b) {
+
+
+
+
 
     if (!this.state.autoplay){
 
@@ -148,7 +193,7 @@ class App extends Component {
                 }
                 omg -= 1;
           }
-    }, 199*ig) 
+    }, 89*ig) 
     
             //AI green
           }
@@ -183,7 +228,7 @@ class App extends Component {
               }
               om -= 1;
         }
-  }, 88*i) 
+  }, 119*i) 
   }
           //AI red
 
@@ -236,7 +281,7 @@ class App extends Component {
               }
               omb -= 1;
         }
-  }, 139*ib) 
+  }, 149*ib) 
   }
           //AI blue
 
@@ -260,7 +305,7 @@ class App extends Component {
         for (let y9=0; y9<this.state.sizey; y9++) {
           
           for (let yy9=0; yy9<this.state.sizex; yy9++) {
-              if (this.state.p[y9][yy9] === 6 && this.state.c[y9][yy9] === "violet"){
+              if (this.state.p[y9][yy9] === 6 && (this.state.c[y9][yy9] === "orchid" || this.state.c[y9][yy9] === "violet") ){
                 console.log("6")
                 this.colorBlink (y9,yy9);
                 var pp = this.state.p;
@@ -277,7 +322,7 @@ class App extends Component {
         while (omc>0) {
               var a2=Math.floor(this.state.sizey*Math.pow(Math.random(),2))
               var b2=Math.floor(this.state.sizex*Math.pow(Math.random(),2))
-              if ((Math.random()>0.8 || this.state.p[a2][b2] > 4) && this.state.c[a2][b2] == "violet" && ((a2+1<this.state.sizey && this.state.c[a2+1][b2] != "violet") || (b2+1<this.state.sizex && this.state.c[a2][b2+1] != "violet") || (a2 > 0 && this.state.c[a2-1][b2] != "violet") || (b2>0 && this.state.c[a2][b2-1] != "violet"))  ) {
+              if ((Math.random()>0.8 || this.state.p[a2][b2] > 4) && (this.state.c[a2][b2] == "orchid" && ((a2+1<this.state.sizey && this.state.c[a2+1][b2] != "orchid") || (b2+1<this.state.sizex && this.state.c[a2][b2+1] != "orchid") || (a2 > 0 && this.state.c[a2-1][b2] != "orchid") || (b2>0 && this.state.c[a2][b2-1] != "orchid")) || this.state.c[a2][b2] == "violet" && ((a2+1<this.state.sizey && this.state.c[a2+1][b2] != "violet") || (b2+1<this.state.sizex && this.state.c[a2][b2+1] != "violet") || (a2 > 0 && this.state.c[a2-1][b2] != "violet") || (b2>0 && this.state.c[a2][b2-1] != "violet")))  ) {
                   this.colorBlink (a2,b2);
                   var pp = this.state.p;
                   pp[a2][b2] += 1;
@@ -304,12 +349,13 @@ class App extends Component {
 
 
       
+
       }
 
   
   componentDidMount() {
     setInterval(this.changeActiveMedia.bind(this), this.state.render);
-    
+    this.updateGraph()
   }
 
   changeActiveMedia(aa,bb,custom="no"){
@@ -371,32 +417,10 @@ class App extends Component {
 
      //   }
      // }
-     var black = 0;
-     var green = 0;
-     var red=0;
-     var royalblue=0;
-     var violet=0;
+    
 
    
-    for (var r=0; r<this.state.sizey; r++){
-      for (var s=0; s<this.state.sizex; s++)
-        {
-          if (this.state.c[r][s] == "black") {black += 1}
-          if (this.state.c[r][s] == "limegreen") {green += 1}
-          if (this.state.c[r][s] == "red") {red += 1}
-          if (this.state.c[r][s] == "royalblue") {royalblue += 1}
-          if (this.state.c[r][s] == "violet") {violet += 1}
-        }
-    }
     
-    this.setState({
-      green,
-      royalblue,
-      violet,
-      red,
-      black
-    })
-
   }
 
   me(event) {
@@ -421,6 +445,8 @@ class App extends Component {
       info: 2
 
     })
+
+    setTimeout(() => {this.updateGraph()} ,25) 
   }
   medium(){
     console.log("function medium")
@@ -448,7 +474,11 @@ class App extends Component {
       info: 2
 
     })
+
+    setTimeout(() => {this.updateGraph()} ,25) 
   }
+
+
   hard(){
 
     localStorage.setItem('difficulty', 3);
@@ -478,6 +508,8 @@ class App extends Component {
       info: 1.5,
       c:cc,
     })
+
+    setTimeout(() => {this.updateGraph()} ,25) 
   }
   imba(){
 
@@ -488,12 +520,12 @@ class App extends Component {
 
     if (this.state.version == "Big") {
       pp[2][3] = 6;
-      cc[2][3] = "violet";
+      cc[2][3] = "orchid";
       pp[3][2] = 6;
       cc[3][2] = "royalblue";}
   else {
       pp[3][13] = 6;
-      cc[3][13] = "violet";
+      cc[3][13] = "orchid";
       pp[5][7] = 6;
       cc[5][7] = "royalblue";
   }
@@ -508,6 +540,8 @@ class App extends Component {
       info: 2,
       c:cc,
     })
+
+    setTimeout(() => {this.updateGraph()} ,25) 
   }
   vlcek(){
     this.setState({
@@ -548,36 +582,49 @@ class App extends Component {
       imba: "white",
       vlcek: "white",
       info : 2,
+      black: 0,
+      red: 1,
+      green: 1,
+      silver: 0,
+      violet: 0,
+      royalblue: 0,
     })
 
+    var x = 14;
+    var y = 8;
+
     if (this.state.version == "Big"){
-       var x = 15;
-      var y = 9;
+      
           var c = Array(y).fill().map(_ => 
             Array(x).fill().map(_ => "red" ) );
             c[1][1] = "limegreen";
-            c[0][1] = "limegreen";
-            c[1][0] = "limegreen";
-            c[0][0] = "limegreen";
+           
+            c[4][3] = "red";
             console.log(c)
+
+            var d = Array(y).fill().map(_ => 
+              Array(x).fill().map(_ => "#111" ) );
+
+              var p = Array(y).fill().map(_ => 
+                Array(x).fill().map(_ => Math.ceil(5*Math.random())) );
+                   p[1][1] = Math.ceil(5*Math.random())
+                  
+                    p[4][3] = Math.ceil(5*Math.random())
+                   
 
 
           this.setState ({
             sizex:x,
             sizey:y,
             version:"Small",
-            p : Array(y).fill().map(_ => 
-              Array(x).fill().map(_ => Math.ceil(5*Math.random()) ) ),  
-              c,
-                
-              d: Array(y).fill().map(_ => 
-                Array(x).fill().map(_ => "black" ) ), 
+           p, c, d
           })
     }
     
     else {
-      var c = Array(5).fill().map(_ => 
-        Array(5).fill().map(_ => "black" ) );
+      
+      var c = Array(y).fill().map(_ => 
+        Array(x).fill().map(_ => "red" ) );
             c[1][1] = "limegreen";
             c[0][1] = "limegreen";
             c[1][0] = "limegreen";
@@ -587,11 +634,11 @@ class App extends Component {
             c[4][3] = "red";
             c[4][4] = "red";
            
-            var d = Array(5).fill().map(_ => 
-              Array(5).fill().map(_ => "black" ) );
+            var d = Array(y).fill().map(_ => 
+              Array(x).fill().map(_ => "#111" ) );
 
-              var p = Array(5).fill().map(_ => 
-                Array(5).fill().map(_ => 0) );
+              var p = Array(y).fill().map(_ => 
+                Array(x).fill().map(_ => 0) );
                    p[1][1] = Math.ceil(5*Math.random())
                    p[0][1] = Math.ceil(5*Math.random())
                     p[1][0] = Math.ceil(5*Math.random())
@@ -614,20 +661,33 @@ class App extends Component {
       })
     }
 
-
+   setTimeout(() => {this.updateGraph()} ,25) 
   }
 
   makeButtonOne (a,b) {
+      
+    if (this.state.c[a][b] == "#eee") {
+    var buttonOne =
+      <div> 
+    <button className="stlpec stlpec1" 
+    style={{backgroundColor:this.state.c[a][b], color:"#eee"}} 
+    onClick={e => this.boxClicked(e, a, b)}> 
+    {this.state.p[a][b]} 
+    </button>
+      </div>}
+    else {
       var buttonOne =
       <div> 
     <button className="stlpec stlpec1" 
-    style={{backgroundColor:this.state.c[a][b], color:this.state.d[a][b]}} 
+    style={{backgroundColor:this.state.c[a][b], color: this.state.d[a][b]}} 
     onClick={e => this.boxClicked(e, a, b)}> 
     {this.state.p[a][b]} 
     </button>
       </div>
+    }
     
       return buttonOne
+
   }
 
   makeButtonLine (a) {
@@ -728,6 +788,8 @@ class App extends Component {
         <div style={{height:18, width:(70/this.state.sizey)*this.state.royalblue}} className="stlpec royalblue"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.violet}} className="stlpec violet"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.black}} className="stlpec black"></div>
+        <div style={{height:18, width:(70/this.state.sizey)*this.state.orchid}} className="stlpec orchid"></div>
+        <div style={{height:18, width:(70/this.state.sizey)*this.state.silver}} className="stlpec silver"></div>
         </div>
         <a href = "">
         <div  className = "reset">

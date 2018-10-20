@@ -70,6 +70,12 @@
 .black {
   background-color: black;
 }
+.silver {
+  background-color:#eee;
+}
+.orchid {
+  background-color:orchid;
+}
 
 .reset {
   font-size: 2em;
