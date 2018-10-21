@@ -41,10 +41,12 @@
   width: 70px;
   height: 70px;
   text-align:center;
-  padding-top: 5px;
+  padding-top: 2px;
+  padding-left: 3px;
   box-sizing: border-box;
-  font-size: 3.3em;  
+  font-size: 3.6em;  
   font-family: 'icomoon', cursive;
+  font-weight: 10;
   
 }
 

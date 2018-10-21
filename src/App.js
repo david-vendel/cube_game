@@ -21,18 +21,18 @@ class App extends Component {
         c[1][0] = "limegreen";
         c[0][0] = "limegreen";
         
-        c[3][3] = "red";
-        c[3][4] = "red";
-        c[4][3] = "re";
+        c[3][3] = "yellow";
+        c[3][4] = "yellow";
+        c[4][3] = "yellow";
         c[4][4] = "red";
 
         console.log(c)
 
     this.state = {
       turn: true,
-      green:1,
-      royalblue:1,
-      violet:1,
+      green:0,
+      royalblue:0,
+      violet:0,
       p : Array(sizey).fill().map(_ => 
         Array(sizex).fill().map(_ => 0) ),  
         c,
@@ -48,15 +48,17 @@ class App extends Component {
       info : 2,
       sizex,
       sizey,
-      render : 1,
+      render : 120,
       version : version,
       counting: 1,
       autoplay: false,
-      speed:100,
-      black:16,
+      speed:200,
+      black:0,
       orchid:0,
       silver:0,
-      queue = [],
+      queue : [],
+      allowOpponentMove : false,
+      
     }
     this.boxClicked = this.boxClicked.bind(this)
     this.me = this.me.bind(this)
@@ -78,9 +80,9 @@ class App extends Component {
     })
 
   }
-  colorBlink (a,b) {
+  colorBlink (a,b, color="white") {
     var dd = this.state.d;
-    dd[a][b] = "white";
+    dd[a][b] = color;
     this.setState({
       d:dd
     })  
@@ -135,72 +137,11 @@ class App extends Component {
     })
   }
 
-  boxClicked(event, a, b) {
 
 
 
-
-
-    if (!this.state.autoplay){
-
-
-          console.log("click")
-            if (this.state.c[a][b] != "limegreen") {return}
-
-            if (!this.state.turn) {return
-              }
-
-            for (var y=0; y<this.state.sizey; y++) {
-                for (var i=0; i<this.state.sizex; i++) {
-                    if (this.state.p[y][i] > 6){return}
-                }}
-        
-            
-                var boxValue = 1+this.state.p[a][b];
-                  
-                var pp = this.state.p;
-                pp[a][b] = boxValue
-                this.setState  ({
-                  p : pp, 
-                  turn : false
-                })
-      
-              } else {
-  //AI green
- 
-  for (let ig = 1; ig <= this.state.info; ig++) {
-    setTimeout(() => {
-  
-      for (var y=0; y<this.state.sizey; y++) {
-        for (var yy=0; yy<this.state.sizex; yy++) {
-            if (this.state.p[y][yy] > 6){
-              this.changeActiveMedia(y,yy,"yes"); i-=1; continue;}
-        }}
-  
-  
-          var omg = 9999;
-          
-          while (omg>0) {
-                var a2=Math.floor(this.state.sizey*Math.random())
-                var b2=Math.floor(this.state.sizex*Math.random())
-                if (this.state.c[a2][b2] == "limegreen") {
-                    this.colorBlink (a2,b2);
-                    var pp = this.state.p;
-                    pp[a2][b2] += 1;
-                    this.setState ({
-                      p : pp
-                    }) 
-                    omg = 0;
-                }
-                omg -= 1;
-          }
-    }, 89*ig) 
-    
-            //AI green
-          }
-        }
-
- //AI red
+  aiRed () {
+    //AI red
      
  for (let i = 1; i <= this.state.info; i++) {
   setTimeout(() => {
@@ -218,33 +159,45 @@ class App extends Component {
               var a2=Math.floor(this.state.sizey*Math.random())
               var b2=Math.floor(this.state.sizex*Math.random())
               if (this.state.c[a2][b2] == "red") {
-                  this.colorBlink (a2,b2);
-                  var pp = this.state.p;
-                  pp[a2][b2] += 1;
-                  this.setState ({
-                    p : pp
-                  }) 
+                 
+                  
+
+
+                  var qq = this.state.queue;
+                 
+                  qq.push([a2,b2,this.state.c[a2][b2],"red"]) 
+             
+                  this.setState ({    
+                    queue : qq
+                  })
+
+
+
+
                   if (this.state.info == 1.5) {om -=50;}
                   else {om = 0;}
               }
               om -= 1;
         }
-  }, 119*i) 
+  }, 11*i) 
   }
           //AI red
+  }
 
 
- //AI blue
+
+
+  aiBlue (){
+     //AI blue
      
  for (let ib = 1; ib <= this.state.info; ib++) {
 
-  
   setTimeout(() => {
 
     for (var y=0; y<this.state.sizey; y++) {
       for (var yy=0; yy<this.state.sizex; yy++) {
           if (this.state.p[y][yy] > 6){
-             this.changeActiveMedia(y,yy,"yes"); i-=1; continue;}
+             this.changeActiveMedia(y,yy,"yes"); ib-=1; continue;}
       }}
 
 
@@ -255,38 +208,43 @@ class App extends Component {
           
           for (let yy9=0; yy9<this.state.sizex; yy9++) {
               if (this.state.p[y9][yy9] === 6 && this.state.c[y9][yy9] === "royalblue"){
-                console.log("6")
-                this.colorBlink (y9,yy9);
-                var pp = this.state.p;
-                pp[y9][yy9] += 1;
-                this.setState ({
-                  p : pp
-                }) 
+                
+                var qq = this.state.queue;
+                 
+                  qq.push([y9,yy9,this.state.c[y9][yy9],"royalblue"]) 
+             
+                  this.setState ({    
+                    queue : qq
+                  })
+
+
                 if (omb>100 && this.state.info == 1.5) {omb = 100;} else {
                   omb = 0; break;}
               }
           }}
 
-
         while (omb>0) {
               var a2=Math.floor(this.state.sizey*Math.random())
               var b2=Math.floor(this.state.sizex*Math.random())
               if (this.state.c[a2][b2] == "royalblue") {
-                  this.colorBlink (a2,b2);
-                  var pp = this.state.p;
-                  pp[a2][b2] += 1;
-                  this.setState ({
-                    p : pp
-                  }) 
+       
+                var qq = this.state.queue;
+                qq.push([a2,b2,this.state.c[a2][b2],"royalblue"]) 
+                this.setState ({    
+                  queue : qq
+                })
+
                   omb = 0;
               }
               omb -= 1;
         }
-  }, 149*ib) 
+  }, 22*ib) 
   }
           //AI blue
+  }
 
 
+  aiViolet(){
 
  //AI violet
      
@@ -296,7 +254,7 @@ class App extends Component {
     for (var y=0; y<this.state.sizey; y++) {
       for (var yy=0; yy<this.state.sizex; yy++) {
           if (this.state.p[y][yy] > 6){
-             this.changeActiveMedia(y,yy,"yes"); i-=1; continue;}
+             this.changeActiveMedia(y,yy,"yes"); ic-=1; continue;}
       }}
 
 
@@ -307,13 +265,16 @@ class App extends Component {
           
           for (let yy9=0; yy9<this.state.sizex; yy9++) {
               if (this.state.p[y9][yy9] === 6 && (this.state.c[y9][yy9] === "orchid" || this.state.c[y9][yy9] === "violet") ){
-                console.log("6")
-                this.colorBlink (y9,yy9);
-                var pp = this.state.p;
-                pp[y9][yy9] += 1;
-                this.setState ({
-                  p : pp
-                }) 
+                
+                
+                var qq = this.state.queue;
+                qq.push([y9,yy9,this.state.c[y9][yy9],"violet"]) 
+                this.setState ({    
+                  queue : qq
+                })
+
+
+
                 if (omc>100 && this.state.info == 1.5) {omc = 100;} else {
                 omc = 0; break; }
               }
@@ -324,106 +285,221 @@ class App extends Component {
               var a2=Math.floor(this.state.sizey*Math.pow(Math.random(),2))
               var b2=Math.floor(this.state.sizex*Math.pow(Math.random(),2))
               if ((Math.random()>0.8 || this.state.p[a2][b2] > 4) && (this.state.c[a2][b2] == "orchid" && ((a2+1<this.state.sizey && this.state.c[a2+1][b2] != "orchid") || (b2+1<this.state.sizex && this.state.c[a2][b2+1] != "orchid") || (a2 > 0 && this.state.c[a2-1][b2] != "orchid") || (b2>0 && this.state.c[a2][b2-1] != "orchid")) || this.state.c[a2][b2] == "violet" && ((a2+1<this.state.sizey && this.state.c[a2+1][b2] != "violet") || (b2+1<this.state.sizex && this.state.c[a2][b2+1] != "violet") || (a2 > 0 && this.state.c[a2-1][b2] != "violet") || (b2>0 && this.state.c[a2][b2-1] != "violet")))  ) {
-                  this.colorBlink (a2,b2);
-                  var pp = this.state.p;
-                  pp[a2][b2] += 1;
-                  this.setState ({
-                    p : pp
-                  }) 
+                  
+                
+                var qq = this.state.queue;
+                qq.push([a2,b2,this.state.c[a2][b2],"violet"]) 
+                this.setState ({    
+                  queue : qq
+                })
+
+
+
                   omc = 0;
               }
               omc -= 1;
         }
-  }, 177*ic) 
+  }, 33*ic) 
   }
           //AI violet
 
+  }
+
+
+      aiGreen(){
+
+          //AI green
+ 
+  for (let ig = 1; ig <= this.state.info; ig++) {
+    setTimeout(() => {
+  
+      for (var y=0; y<this.state.sizey; y++) {
+        for (var yy=0; yy<this.state.sizex; yy++) {
+            if (this.state.p[y][yy] > 6){
+              this.changeActiveMedia(y,yy,"yes"); ig-=1; continue;}
+        }}
+  
+  
+          var omg = 9999;
+          
+          while (omg>0) {
+                var a2=Math.floor(this.state.sizey*Math.random())
+                var b2=Math.floor(this.state.sizex*Math.random())
+                if (this.state.c[a2][b2] == "limegreen") {
+                  var qq = this.state.queue;
+                 
+                  qq.push([a2,b2,this.state.c[a2][b2],"red"]) 
+             
+                  this.setState ({    
+                    queue : qq
+                  })
+                    omg = 0;
+                }
+                omg -= 1;
+          }
+    }, 6*ig) 
+    
+            //AI green
+          }
+
+      }
+
+
+
+  boxClicked(event, a, b) {
+
+
+
+
+
+    if (!this.state.autoplay){
+
+
+          console.log("click")
+            if (this.state.c[a][b] != "limegreen") {return}
+
+            if (!this.state.turn) {return
+              }
+        /*
+            for (var y=0; y<this.state.sizey; y++) {
+                for (var i=0; i<this.state.sizex; i++) {
+                    if (this.state.p[y][i] > 6){return}
+                }}
+          */
+            
+                this.moveDice (a,b,this.state.c[a][b]);
+
+                this.setState({
+                  turn : false
+                });
+
+
+              } 
+
+        
+        this.setState({allowOpponentMove : true})
+ 
+
+
+
+
+
+
+
          
       
-
+        /*
           setTimeout (() => {
               this.setState({
                 turn : true
               });
           }, this.state.info*100+50)
-
+        */
 
 
       
 
       }
+ 
 
-  
   componentDidMount() {
-    setInterval(this.changeActiveMedia.bind(this), this.state.render);
+    this.interval = setInterval(this.changeActiveMedia.bind(this), this.state.render);
     this.updateGraph()
+  }
+
+  componentWillUnmount() {
+    clearInterval( this.interval);
   }
 
   changeActiveMedia(aa,bb,custom="no"){
 
+    console.log("queue", this.state.queue)
+    console.log("turn ", this.state.turn)
     if (this.state.autoplay){
       
-      var foo = 1 + this.state.counting;
-    if (foo >this.state.speed) {
       this.boxClicked()
-      this.setState ({
-        counting:0
+ 
+  }  
+ 
+   if (Math.random()<0.002) {this.updateGraph()}
+///////////////////////////////////////////////////////////////////////////////////////////////
+   var qq = this.state.queue;
+   if (qq.length > 0) {
+     
+        var next = qq.shift();
+        console.log("next: ", next);
+        this.moveDice (next[0], next[1],next[2],next[3])
+    }
+    else {
+      this.setState({
+        turn:true
       })
 
-   
+      if (this.state.allowOpponentMove){
+      if (this.state.autoplay) {
+        this.aiGreen();
+      }
+      this.aiRed();
+      this.aiBlue();
+      this.aiViolet();
+        this.setState({allowOpponentMove : false})
+      }
     }
-    else  {
-    
-    this.setState ({
-      counting : foo
-    })
-  }  
-   }
-   if (Math.random()<0.002) {this.updateGraph()}
 
 
-    var a;
-    var b;
-    //for (var y=0; y<4; y++) {
-     // for (var i=0; i<4; i++) {
-        a=Math.floor(this.state.sizey*Math.random())
-        b=Math.floor(this.state.sizex*Math.random())
-        if (custom=="yes") {a = aa};
-        if (custom=="yes") {b = bb};
-       
-        if (this.state.p[a][b] > 6) {
-          var cc = this.state.c;
-          var ccc = cc[a][b] //current color from c array
-          var pp = this.state.p;
-          if (a>0) {pp[a-1][b] += 1; cc[a-1][b] = ccc}
-          if (a<this.state.sizey-1) {pp[a+1][b] += 1; cc[a+1][b] = ccc}
-          if (b<this.state.sizex-1) {pp[a][b+1] += 1; cc[a][b+1] = ccc}
-          if (b>0) {pp[a][b-1] += 1; cc[a][b-1] = ccc}
-  
-          pp[a][b] = 1;
-  
-          this.setState ({
-            p : pp
-          })
-        }
-
-        for (var y=0; y<this.state.sizey; y++) {
-          for (var i=0; i<this.state.sizex; i++) {
-            if (this.state.c[a][b] == "white") {
-              var cc3 = this.state.c;
-              cc3[a][b] = "red";
-              this.setState({c:cc3})
-            }
-          }
-        }
-
-     //   }
-     // }
-    
-
-   
-    
   }
+
+       
+
+      moveDice(a,b,ccc,source="none")
+      {
+        console.log("dice moved",a, b, ccc)
+
+      if (source == "explode") {
+      this.colorBlink (a,b,"red")
+    }
+      else
+      this.colorBlink (a,b,"white")
+    
+
+
+      var boxValue = 1+this.state.p[a][b]; 
+      var pp = this.state.p;
+      var cc = this.state.c;
+      pp[a][b] = boxValue
+      cc[a][b] = ccc
+      this.setState  ({
+        p : pp, 
+        c : cc,
+        turn : false
+      })
+
+      if (boxValue > 6 ) { this.explode (a,b,ccc)}
+    }
+
+
+
+    explode (a,b,ccc) {
+
+      console.log("dice explode ", a, b, ccc)
+            var qq = this.state.queue;
+            var cc = this.state.c;
+            //var ccc = cc[a][b] //current color from c array
+            var pp = this.state.p; //current number
+            if (a>0) { qq.unshift([a-1,b,ccc,"explode"]) }
+            if (b>0) { qq.unshift([a,b-1,ccc,"explode"]); }
+            if (a<this.state.sizey-1) { qq.unshift([a+1,b,ccc,"explode"]); }
+            if (b<this.state.sizex-1) { qq.unshift([a,b+1,ccc,"explode"]); }
+              
+            pp[a][b] = 1;
+    
+            this.setState ({
+              p : pp,
+              queue : qq
+            })
+    }
+
+
 
   me(event) {
     event.target.style.backgroundColor = "white";
@@ -559,7 +635,15 @@ class App extends Component {
 
   setSpeed (event) {
     this.setState ( {
-      speed : 220-2*event.target.value})
+      render : 210-2*event.target.value})
+
+      clearInterval( this.interval);
+      this.interval = setInterval(this.changeActiveMedia.bind(this), this.state.render);
+      this.updateGraph()
+    }
+  
+    componentWillUnmount() {
+      
     }
 
     componentWillMount () {
@@ -585,8 +669,8 @@ class App extends Component {
       vlcek: "white",
       info : 2,
       black: 0,
-      red: 1,
-      green: 1,
+      red: 0,
+      green: 0,
       silver: 0,
       violet: 0,
       royalblue: 0,
@@ -724,7 +808,7 @@ class App extends Component {
     
     var versionSpan = <span className="version" onClick={this.versionChange}>{this.state.version}</span>
     
-    var rangeSpan =  <span className="rangespan"> <input type="range" step="1" defaultValue="50" style = {{width:"65px"}}onChange={this.setSpeed} /></span>
+    var rangeSpan =  <span className="rangespan"> <input type="range" step="20" defaultValue="60" style = {{width:"65px"}}onChange={this.setSpeed} /></span>
 
     var intro;
     if (this.state.green == this.state.sizex*this.state.sizey) {
@@ -740,10 +824,20 @@ class App extends Component {
       </div>
     } else
     {
-      intro = 
-      <div className = "riadok intro">
-      You are <span style={{color:"green"}}>green</span>. Conquer <br/>the whole area to win.{versionSpan}
-      </div>
+      if (this.state.turn) {
+        intro = 
+        <div className = "riadok intro">
+        You are <span style={{color:"green"}}>green</span>. Conquer <br/>the whole area to win.{versionSpan}
+        </div>
+      }
+      else
+      {
+        intro = 
+        <div className = "riadok intro">
+        You are <span style={{color:"darkred"}}>green</span>. Conquer <br/>the whole area to win.{versionSpan}
+        </div>
+      
+      }
     }}
 
     var counter = 
@@ -788,10 +882,12 @@ class App extends Component {
         <div style={{height:18, width:70*this.state.green/this.state.sizey}} className="stlpec green"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.red}} className="stlpec red"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.royalblue}} className="stlpec royalblue"></div>
-        <div style={{height:18, width:(70/this.state.sizey)*this.state.violet}} className="stlpec violet"></div>
+
         <div style={{height:18, width:(70/this.state.sizey)*this.state.black}} className="stlpec black"></div>
+        
+        {/*<div style={{height:18, width:(70/this.state.sizey)*this.state.violet}} className="stlpec violet"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.orchid}} className="stlpec orchid"></div>
-        <div style={{height:18, width:(70/this.state.sizey)*this.state.silver}} className="stlpec silver"></div>
+    <div style={{height:18, width:(70/this.state.sizey)*this.state.silver}} className="stlpec silver"></div>*/}
         </div>
         <a href = "">
         <div  className = "reset">
