@@ -13,6 +13,18 @@ class App extends Component {
       var sizey = 5;
 
       var version = localStorage.getItem('version');
+      var dice = localStorage.getItem('dice');
+
+      var diceClass = "number5";
+      var  font = "number"
+      if (dice == "number") {
+          diceClass = "dice5"
+          font = "dice"
+      }
+      else {
+        diceClass = "number5";
+        font = "number"
+      }
 
       var c = Array(sizey).fill().map(_ => 
         Array(sizex).fill().map(_ => "" ) );
@@ -36,7 +48,10 @@ class App extends Component {
       p : Array(sizey).fill().map(_ => 
         Array(sizex).fill().map(_ => 0) ),  
         c,
-          
+        buttonGrid : Array(15).fill().map(_ => 
+          Array(15).fill().map(_ => 35) ),  
+          diceGrid : Array(15).fill().map(_ => 
+            Array(15).fill().map(_ => 55) ),  
           d: Array(sizey).fill().map(_ => 
             Array(sizex).fill().map(_ => "white" ) ), 
       easy : "yellow",
@@ -47,6 +62,7 @@ class App extends Component {
       vlcek: "white",
       info : 2,
       sizex,
+      dont : "number",
       sizey,
       render : 120,
       version : version,
@@ -58,6 +74,9 @@ class App extends Component {
       silver:0,
       queue : [],
       allowOpponentMove : false,
+      diceClass,
+      font,
+      randomNumber: 5
       
     }
     this.boxClicked = this.boxClicked.bind(this)
@@ -70,6 +89,7 @@ class App extends Component {
     this.versionChange = this.versionChange.bind(this)
     this.handleAutoplay = this.handleAutoplay.bind(this)
     this.setSpeed = this.setSpeed.bind(this)
+    this.changeDice = this.changeDice.bind(this)
 
     
   }
@@ -86,6 +106,18 @@ class App extends Component {
     this.setState({
       d:dd
     })  
+    
+    var gg = this.state.buttonGrid
+    gg[a][b] = 56
+    this.setState({buttonGrid:gg})
+
+    setTimeout(() => {
+      var gg = this.state.buttonGrid
+    gg[a][b] = 35
+    this.setState({buttonGrid:gg})
+
+    },50)
+
     
 
     setTimeout(() => {
@@ -133,7 +165,8 @@ class App extends Component {
       red,
       black,
       silver,
-      orchid
+      orchid,
+      
     })
   }
 
@@ -413,16 +446,21 @@ class App extends Component {
 
   changeActiveMedia(aa,bb,custom="no"){
 
-    console.log("queue", this.state.queue)
-    console.log("turn ", this.state.turn)
+   
     if (this.state.autoplay){
       
+  
+      var randomNumber = 4*(Math.ceil((Date.now()/1000))%2)+1
+      this.setState({randomNumber})
+    
       this.boxClicked()
  
   }  
  
    if (Math.random()<0.002) {this.updateGraph()}
 ///////////////////////////////////////////////////////////////////////////////////////////////
+ 
+
    var qq = this.state.queue;
    if (qq.length > 0) {
      
@@ -448,6 +486,8 @@ class App extends Component {
 
 
   }
+
+    
 
        
 
@@ -491,13 +531,23 @@ class App extends Component {
             if (a<this.state.sizey-1) { qq.unshift([a+1,b,ccc,"explode"]); }
             if (b<this.state.sizex-1) { qq.unshift([a,b+1,ccc,"explode"]); }
               
-            pp[a][b] = 1;
-    
-            this.setState ({
-              p : pp,
-              queue : qq
-            })
-    }
+         
+              pp[a][b] = "✸";    
+              this.setState ({
+                p : pp,
+                queue : qq
+              })
+              
+              setTimeout(() => {
+                pp = this.state.p;
+                pp[a][b] = 1;    
+              this.setState ({
+                p : pp,
+                queue : qq
+              })
+              },50)
+            
+        }
 
 
 
@@ -750,13 +800,30 @@ class App extends Component {
    setTimeout(() => {this.updateGraph()} ,25) 
   }
 
+  
+  changeDice() {
+      if (this.state.font == "dice"){
+          this.setState({
+            font:"numer",
+          diceClass:"dice5"});
+          localStorage.setItem("dice","dice")
+
+      }  
+      else {
+        this.setState({font:"dice",
+          diceClass:"number5"});
+          localStorage.setItem("dice","number")
+      }
+  }
+
+  
   makeButtonOne (a,b) {
       
-    if (this.state.c[a][b] == "#eee") {
+    if (this.state.font == "dice") {
     var buttonOne =
       <div> 
-    <button className="stlpec stlpec1" 
-    style={{backgroundColor:this.state.c[a][b], color:"#eee"}} 
+    <button className="stlpec dice" 
+    style={{backgroundColor:this.state.c[a][b],  color: this.state.d[a][b], fontSize: this.state.diceGrid[a][b]}} 
     onClick={e => this.boxClicked(e, a, b)}> 
     {this.state.p[a][b]} 
     </button>
@@ -764,8 +831,8 @@ class App extends Component {
     else {
       var buttonOne =
       <div> 
-    <button className="stlpec stlpec1" 
-    style={{backgroundColor:this.state.c[a][b], color: this.state.d[a][b]}} 
+    <button className="stlpec number" 
+    style={{backgroundColor:this.state.c[a][b], color: this.state.d[a][b], fontSize: this.state.buttonGrid[a][b]}}
     onClick={e => this.boxClicked(e, a, b)}> 
     {this.state.p[a][b]} 
     </button>
@@ -858,7 +925,7 @@ class App extends Component {
         
         <div className = "">
         <div className = "difficulty">
-          <span title="Difficulty">Difficulty:</span>
+          <span >Difficulty:</span>
           {rangeSpan}
           <span className="autoplay">
           <label>Autoplay 
@@ -878,22 +945,26 @@ class App extends Component {
           <button title="All 3 opponents have 2 moves each." className="difficultyButton imba" style={{backgroundColor:this.state.imba, color:this.state.imbaColor}} onClick={this.imba} > IMBA </button>
         </div>
 
-        <div className = "">
+        <div className = "graph">
         <div style={{height:18, width:70*this.state.green/this.state.sizey}} className="stlpec green"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.red}} className="stlpec red"></div>
         <div style={{height:18, width:(70/this.state.sizey)*this.state.royalblue}} className="stlpec royalblue"></div>
 
-        <div style={{height:18, width:(70/this.state.sizey)*this.state.black}} className="stlpec black"></div>
+       <div style={{height:18, width:(70/this.state.sizey)*this.state.orchid}} className="stlpec orchid"></div>
+         
+       <div style={{height:18, width:(70/this.state.sizey)*this.state.violet}} className="stlpec violet"></div>
+        {/*   <div style={{height:18, width:(70/this.state.sizey)*this.state.black}} className="stlpec black"></div>
         
-        {/*<div style={{height:18, width:(70/this.state.sizey)*this.state.violet}} className="stlpec violet"></div>
-        <div style={{height:18, width:(70/this.state.sizey)*this.state.orchid}} className="stlpec orchid"></div>
+      
     <div style={{height:18, width:(70/this.state.sizey)*this.state.silver}} className="stlpec silver"></div>*/}
         </div>
-        <a href = "">
-        <div  className = "reset">
-            <div>RESET</div>
+        
+        <div className="resetContainer"><a href = "">
+            <div className = "reset">RESET</div></a>
+        
+        <div className={this.state.diceClass} title="Difficulty" onClick={this.changeDice}>{this.state.randomNumber}</div>
         </div>
-        </a>
+        
 
          <div  className = "signature">
          <div className="counter">        {counter}
@@ -904,6 +975,8 @@ class App extends Component {
 
         <div className = "info">
         Firing {this.state.info} at once
+
+       
         </div>
         
 

@@ -44,11 +44,37 @@
   padding-top: 2px;
   padding-left: 3px;
   box-sizing: border-box;
+
+  
+}
+
+.dice {
   font-size: 3.6em;  
   font-family: 'icomoon', cursive;
   font-weight: 10;
-  
 }
+
+.dice5 {
+    
+  font-family: 'icomoon', cursive;
+  position: absolute;
+  right: 0px;bottom:0px;
+  
+  font-size: 3.3em;padding-left:20px;
+}
+
+.number {
+  font-size: 2.2em;
+}
+
+.number5 {
+  font-family: 'icomoon', cursive;
+  position: absolute;
+  right: 0px;bottom:0px;
+  font-size: 3.3em;
+  padding-left:20px;
+}
+
 
 .button:hover {
   background-color: #333
@@ -88,6 +114,16 @@
   background-color: darkorange ;
   display: block;
   
+  
+}
+
+.resetContainer {
+  position: relative;
+}
+
+.graph {
+  height: 18px;
+  background-color: darkorange ;
 }
 
 a:visited {
