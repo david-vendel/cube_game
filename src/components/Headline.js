@@ -1,4 +1,5 @@
 import React from 'react';
+import './animation.css'
 
 const Headline = () => {
 

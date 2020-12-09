@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+       <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=UA-164642885-2"
+    ></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-164642885-3');
+    </script>
+
     <meta charset="utf-8">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     <!----<link href="https://fonts.googleapis.com/css?family=Charmonman" rel="stylesheet"> -->
@@ -12,7 +27,7 @@
       homescreen on Android. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
-    <link rel="stylesheet" href="https://davidvendel.com/css/animation.css">
+    <!-- <link rel="stylesheet" href="https://davidvendel.com/css/animation.css"> -->
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
@@ -39,15 +54,16 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+    
     <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-47470313-3"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-47470313-3"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
 
-  gtag('config', 'UA-47470313-3');
-</script>
+    gtag('config', 'UA-47470313-3');
+    </script> -->
 
   </body>
 </html>

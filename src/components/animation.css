@@ -1,0 +1,77 @@
+.headline-main {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    background-color: black;
+    position: absolute;
+    z-index: 100;
+    width: 100%;
+    height: 25px
+}
+
+.headline-neon {
+    position: relative;
+    overflow: hidden;
+    background-color: black;
+    color: white;
+    line-height: 25px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.headline-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    mix-blend-mode: multiply;
+    background: linear-gradient(45deg, red, gold, lightgreen, gold, red);
+    transition: all 5s ease;
+    opacity: 0;
+}
+
+.headline-spotlight {
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(
+            circle,
+            white,
+            transparent 25%
+        ) center / 25% 25%,
+        radial-gradient(
+            circle,
+            white,
+            black 25%
+        ) center / 12.5% 12.5%;
+    animation: headline-light 15s linear infinite;
+    mix-blend-mode: color-dodge;
+}
+
+@keyframes headline-light {
+    to {
+        transform: translate(50%, 50%);
+    }
+}
+
+.headline-spotlight:hover {
+    animation: headline-light 5s linear infinite;
+    -webkit-animation-play-state: running;
+    animation-play-state: running;
+}
+
+.headline-neon:hover .headline-gradient {
+    opacity: 1;
+}
+
+.headline-text {
+    transition: all 0.5s ease-in-out;
+}
+
+.headline-neon:hover .headline-text {
+    font-size: 18px;
+}
