@@ -1,0 +1,17 @@
+{
+    "name": "webSocketServer",
+    "version": "1.0.0",
+    "description": "web socket server",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "repository": "https://github.com/justdvl/webSocketServer.git",
+    "author": "David Vendel <33971649+justdvl@users.noreply.github.com>",
+    "license": "MIT",
+    "dependencies": {
+        "graphql-yoga": "^1.18.3",
+        "html": "^1.0.0",
+        "websocket": "^1.0.32"
+    }
+}
