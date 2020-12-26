@@ -7,7 +7,7 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
-const client = new W3CWebSocket('ws://127.0.0.1:8000');
+let client = new W3CWebSocket('ws://127.0.0.1:8000');
 let timeout;
 
 const useStyles = makeStyles((theme) => ({
@@ -88,7 +88,7 @@ const MultiPlayer = () => {
                 timeout = setTimeout(() => {
                     console.log("server didn't reply!");
                     closed();
-                }, 2000);
+                }, 2200);
             }
         };
 
@@ -118,6 +118,21 @@ const MultiPlayer = () => {
 
     const closed = () => {
         setOnline(false);
+        setInterval(() => {
+            reconnect();
+        }, 5000);
+    };
+
+    const reconnect = () => {
+        console.log('reconnect');
+        // client = new W3CWebSocket('ws://127.0.0.1:8000');
+        // client.send(
+        //     JSON.stringify({
+        //         type: 'pingpong',
+        //         pong: true,
+        //         userID: userID,
+        //     })
+        // );
     };
 
     return (

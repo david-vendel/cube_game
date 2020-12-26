@@ -12,6 +12,7 @@ const wsServer = new webSocketServer({
 });
 
 const clients = {}; //here we will store all the connected clients
+const clients_timeouts = {}; //here we will store all the timeouts for clients to get rid of them if they dont respon to ping pong
 let pairs = [];
 let pairs_name = [];
 
@@ -86,19 +87,25 @@ wsServer.on('request', (request) => {
             }
 
             if (JSON.parse(message.utf8Data).type === 'pingpong') {
-                console.log('pingpong', message);
                 const userID = JSON.parse(message.utf8Data).userID;
+                console.log('pingpong', userID);
 
                 setTimeout(() => {
                     clients[userID].sendUTF(
                         JSON.stringify({
                             type: 'pingpong',
-                            playersCount: 1,
+                            playersCount: Object.keys(clients).length,
                             ping: true,
                             userID: userID,
                         })
                     );
                 }, 1000);
+
+                clearTimeout(clients_timeouts[userID]);
+                clients_timeouts[userID] = setTimeout(() => {
+                    console.log('User ', userID, ' is disconnected');
+                    delete clients[userID];
+                }, 2200);
             }
 
             // if ( Object.keys(clients).length === 1) {
