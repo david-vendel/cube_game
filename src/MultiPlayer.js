@@ -8,6 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 const client = new W3CWebSocket('ws://127.0.0.1:8000');
+let timeout;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -34,12 +35,14 @@ const MultiPlayer = () => {
     const [userID, setUserID] = React.useState('');
     const [waiting, setWaiting] = React.useState(false);
     const [playersCount, setPlayersCount] = React.useState('?');
+    const [online, setOnline] = React.useState(false);
 
     const classes = useStyles();
 
     React.useEffect(() => {
         client.onopen = () => {
             console.log('WebSocket Client Connected');
+            setOnline(true);
         };
 
         client.onmessage = (message) => {
@@ -80,11 +83,18 @@ const MultiPlayer = () => {
                         userID: dataFromServer.userID,
                     })
                 );
+
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    console.log("server didn't reply!");
+                    closed();
+                }, 2000);
             }
         };
 
         client.onclose = () => {
             console.log('closed');
+            closed();
         };
     }, []);
 
@@ -106,6 +116,10 @@ const MultiPlayer = () => {
         // this.setState({ isLoggedIn: true, userName: value, loading: true })
     };
 
+    const closed = () => {
+        setOnline(false);
+    };
+
     return (
         <div style={{ paddingTop: 50 }}>
             <div
@@ -114,7 +128,18 @@ const MultiPlayer = () => {
                     margin: '0 auto',
                 }}
             >
-                <div>Number of players online: {playersCount}</div>
+                <div style={{ display: 'flex' }}>
+                    <div
+                        style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            backgroundColor: online ? 'green' : 'red',
+                            margin: 8,
+                        }}
+                    ></div>
+                    Number of players online: {playersCount}
+                </div>
                 <div
                     style={{
                         display: 'flex',
