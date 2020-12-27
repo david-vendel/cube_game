@@ -1,30 +1,51 @@
-const webSocketsServerPort = 8001;
-const fs = require('fs');
-const https = require('https');
-const WebSocket = require('ws');
+require('dotenv').config();
+const WEBSOCKET_SERVER_PORT = process.env.WEBSOCKET_SERVER_PORT;
+const PATH_ROOT = process.env.PATH_ROOT;
+const PRODUCTION_MODE = process.env.NODE_ENV === 'production';
 
-// const webSocketServer = require('websocket').server;
+const CONSTANT = 1;
+
+// let SERVER = "http://localhost:6900";
+// if (PRODUCTION_MODE) {
+//   SERVER = "/back";
+// }
+
+console.log(
+    'WEBSOCKET_SERVER_PORT',
+    WEBSOCKET_SERVER_PORT,
+    'prod: (must be true if you run this on server)',
+    PRODUCTION_MODE,
+    'path to your encryption',
+    PATH_ROOT
+);
+
+const webSocketsServerPort = WEBSOCKET_SERVER_PORT;
 const express = require('express');
 const app = express();
-//spinning the http server and the websocket server.
-// const server = http.createServer(app);
-// server.listen(webSocketsServerPort);
+const fs = require('fs');
+const https = require('https');
+const http = require('http');
+const WebSocket = require('ws');
 
-// console.log('listening on port ' + webSocketsServerPort);
+let server;
 
-var path_root = '/etc/letsencrypt/live/davidvendel.com/';
-var options = {
-    cert: fs.readFileSync(`${path_root}cert.pem`),
-    key: fs.readFileSync(`${path_root}privkey.pem`),
-};
-var server = https.createServer(options, app);
+if (PRODUCTION_MODE) {
+    const options = {
+        cert: fs.readFileSync(`${PATH_ROOT}cert.pem`),
+        key: fs.readFileSync(`${PATH_ROOT}privkey.pem`),
+    };
+    server = https.createServer(options, app);
+
+    // const io = require('socket.io').listen(https);
+} else {
+    server = http.createServer(app);
+}
+
+const wss = new WebSocket.Server({ server });
+
 server.listen(webSocketsServerPort, () => {
     console.log(`https- listening on *:${webSocketsServerPort}`);
 });
-// const io = require('socket.io').listen(https);
-const wss = new WebSocket.Server({ server });
-
-const CONSTANT = 1;
 
 // const wsServer = new webSocketServer({
 //     server: https,
@@ -69,18 +90,15 @@ wss.on('connection', (ws) => {
     console.log('clients', Object.keys(clients));
 
     setTimeout(() => {
-        for (key in clients) {
-            console.log('sending to client', key);
-            //also ping pong
-            clients[key].send(
-                JSON.stringify({
-                    type: 'pingpong',
-                    playersCount: Object.keys(clients).length,
-                    ping: true,
-                    userID: key,
-                })
-            );
-        }
+        //also ping pong
+        ws.send(
+            JSON.stringify({
+                type: 'pingpong',
+                playersCount: Object.keys(clients).length,
+                ping: true,
+                userID: userID,
+            })
+        );
     }, 30);
 
     ws.on('message', function (message) {
@@ -166,7 +184,7 @@ wss.on('connection', (ws) => {
         }
 
         if (JSON.parse(message).type === 'pingpong') {
-            const userID = JSON.parse(message).userID;
+            const userID = parsedMessage.userID;
             // console.log('pingpong', userID);
 
             setTimeout(() => {
@@ -182,8 +200,14 @@ wss.on('connection', (ws) => {
 
             clearTimeout(clients_timeouts[userID]);
             clients_timeouts[userID] = setTimeout(() => {
-                console.log('User ', userID, ' is disconnected');
                 delete clients[userID];
+
+                console.log(
+                    'User ',
+                    userID,
+                    ' is disconnected, connected users are: ' +
+                        Object.getOwnPropertyNames(clients)
+                );
             }, 1000 * CONSTANT + 2200);
         }
     });

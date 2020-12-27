@@ -7,7 +7,15 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
-let client = new W3CWebSocket('wss://davidvendel.com/ws/');
+const PRODUCTION_MODE = process.env.NODE_ENV === 'production';
+
+const WEBSOCKET_URL = PRODUCTION_MODE
+    ? 'wss://davidvendel.com/ws/'
+    : 'ws://localhost:8001';
+
+console.log('WEBSOCKET_URL', WEBSOCKET_URL);
+
+let client = new W3CWebSocket(WEBSOCKET_URL);
 let timeout;
 const CONSTANT = 1;
 
@@ -256,7 +264,6 @@ const MultiPlayer = () => {
             </div>
 
             {mode === 0 && <Game />}
-            {mode === 2 && <Pair />}
         </div>
     );
 };
