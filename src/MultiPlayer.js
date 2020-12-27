@@ -7,6 +7,7 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
+import Snackbar from '@material-ui/core/Snackbar';
 
 const PRODUCTION_MODE = process.env.NODE_ENV === 'production';
 
@@ -49,6 +50,8 @@ const MultiPlayer = () => {
     const [online, setOnline] = React.useState(false);
     const [player1, setPlayer1] = React.useState(EMPTY_PLAYER);
     const [player2, setPlayer2] = React.useState(EMPTY_PLAYER);
+    const [open, setOpen] = React.useState(false);
+    const [alertMessage, setAlertMessage] = React.useState('');
 
     const classes = useStyles();
 
@@ -124,17 +127,25 @@ const MultiPlayer = () => {
 
                 if (player1.id === who) {
                     console.log('Player ' + player1.name + ' left. You won!');
-                    window.alert('Player ' + player1.name + ' left. You won!');
+                    // window.alert('Player ' + player1.name + ' left. You won!');
+                    setAlertMessage(
+                        'Player ' + player1.name + ' left. You won!'
+                    );
+                    setOpen(true);
                 }
 
                 if (player2.id === who) {
-                    window.alert('Player ' + player2.name + ' left. You won!');
+                    // window.alert('Player ' + player2.name + ' left. You won!');
                     console.log('Player ' + player2.name + ' left. You won!');
+                    setAlertMessage(
+                        'Player ' + player2.name + ' left. You won!'
+                    );
+                    setOpen(true);
                 }
             }
 
             if (dataFromServer.type === 'pingpong') {
-                // console.log('playersCount is ', dataFromServer);
+                console.log('playersCount is ', dataFromServer);
                 setPlayersCount(dataFromServer.playersCount);
 
                 client.send(
@@ -334,6 +345,17 @@ const MultiPlayer = () => {
                     clickedCB={clickedCB}
                 />
             )}
+
+            <Snackbar
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                open={open}
+                onClose={() => {
+                    setOpen(false);
+                }}
+                message={alertMessage}
+                key={'bottomright'}
+                autoHideDuration={3000}
+            />
         </div>
     );
 };
