@@ -1,238 +1,235 @@
 .App {
-  text-align: center;
-  margin: 0 auto;
-  width: 350px;
-  position: relative;
-  padding-top: 25px;
+    text-align: center;
+    margin: 0 auto;
+    width: 350px;
+    position: relative;
+    padding-top: 25px;
 }
 
 .App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
+    animation: App-logo-spin infinite 20s linear;
+    height: 40vmin;
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
 }
 
 .App-link {
-  color: #61dafb;
+    color: #61dafb;
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-
 .stlpec {
-  float: left;
-  width: 70px;
-  height: 70px;
-  text-align:center;
-  padding-top: 2px;
-  padding-left: 3px;
-  box-sizing: border-box;
-
-  
+    float: left;
+    width: 70px;
+    height: 70px;
+    text-align: center;
+    padding-top: 2px;
+    padding-left: 3px;
+    box-sizing: border-box;
 }
 
 .dice {
-  font-size: 3.6em;  
-  font-family: 'icomoon', cursive;
-  font-weight: 10;
+    font-size: 3.6em;
+    font-family: 'icomoon', cursive;
+    font-weight: 10;
 }
 
 .dice5 {
-    
-  font-family: 'icomoon', cursive;
-  position: absolute;
-  right: 0px;bottom:0px;
-  
-  font-size: 3.3em;padding-left:20px;
+    font-family: 'icomoon', cursive;
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+
+    font-size: 3.3em;
+    padding-left: 20px;
 }
 
 .number {
-  font-size: 2.2em;
+    font-size: 2.2em;
 }
 
 .number5 {
-  font-family: 'icomoon', cursive;
-  position: absolute;
-  right: 0px;bottom:0px;
-  font-size: 3.3em;
-  padding-left:20px;
+    font-family: 'icomoon', cursive;
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    font-size: 3.3em;
+    padding-left: 20px;
 }
 
-
 .button:hover {
-  background-color: #333
+    background-color: #333;
 }
 
 .riadok {
-  width: 350;
-  height: 70px;
-  font-family: 'icomoon', cursive;
+    width: 350;
+    height: 70px;
+    font-family: 'icomoon', cursive;
 }
 
 .green {
-  background-color: green;
+    background-color: green;
 }
 .red {
-  background-color: crimson;
+    background-color: crimson;
 }
 .royalblue {
-  background-color: royalblue;
+    background-color: royalblue;
 }
 .violet {
-  background-color: violet;
+    background-color: violet;
 }
 .black {
-  background-color: black;
+    background-color: black;
 }
 .silver {
-  background-color:#eee;
+    background-color: #eee;
 }
 .orchid {
-  background-color:orchid;
+    background-color: orchid;
 }
 
 .reset {
-  font-size: 2em;
-  padding-bottom: 7px;
-  background-color: darkorange ;
-  display: block;
-  
-  
+    font-size: 2em;
+    padding-bottom: 7px;
+    background-color: darkorange;
+    display: block;
 }
 
 .resetContainer {
-  position: relative;
+    position: relative;
+    height: 55px;
 }
 
 .graph {
-  height: 18px;
-  background-color: darkorange ;
+    height: 18px;
+    background-color: darkorange;
 }
 
 a:visited {
-  text-decoration: none;
+    text-decoration: none;
 }
 a:link {
-  text-decoration: none;
+    text-decoration: none;
 }
 
 .intro {
-  position: relative;
-  color:#000;
-  opacity: s1;
-  font-size: 1.5em;
-  text-align: left;
-  padding-bottom: 0em;
-  margin-bottom: 0.4em;
-  padding-top: 0.4em;
+    position: relative;
+    color: #000;
+    opacity: s1;
+    font-size: 1.5em;
+    text-align: left;
+    padding-bottom: 0em;
+    margin-bottom: 0.4em;
+    padding-top: 0.4em;
 }
 
 .version {
-  text-align: right;
-  position: absolute;
-  bottom: 0px;
-  right: 1px;
-  float: right;
-  opacity: 1;
-  color: black;
-  border: 1px solid blue;
-  padding: 2px 7px 6px 7px;
-  background-color: azure;
-  line-height: 1.1em;
-  margin-right: 1px;
-
+    text-align: right;
+    position: absolute;
+    bottom: 0px;
+    right: 1px;
+    float: right;
+    opacity: 1;
+    color: black;
+    border: 1px solid blue;
+    padding: 2px 7px 6px 7px;
+    background-color: azure;
+    line-height: 1.1em;
+    margin-right: 1px;
 }
-.difficulty{
-  position: relative;
-  font-size: 1.7em;
-  padding-left: 1px;
-  padding-bottom: 0.1em;
-  margin-top: 0em;
-  text-align: left;
+.difficulty {
+    position: relative;
+    font-size: 1.7em;
+    padding-left: 1px;
+    padding-bottom: 0.1em;
+    margin-top: 0em;
+    text-align: left;
 }
-.difficultyButton{
-  width: 25%;
-  height: 33px;
-  font-size: 0.9em;
-  font-weight: 300;
+.difficultyButton {
+    width: 25%;
+    height: 33px;
+    font-size: 0.9em;
+    font-weight: 300;
 }
 
 .autoplay {
-  float: right;
-  font-size: smaller;
-  
+    float: right;
+    font-size: smaller;
 }
 .autoplay input {
-  padding: 10px;
-  margin-left: 8px;
-  bottom: 1px;
+    padding: 10px;
+    margin-left: 8px;
+    bottom: 1px;
 }
 
 .rangespan {
- float: right; 
- position: absolute;
- right: 125px;
- bottom: 9px;
- 
+    float: right;
+    position: absolute;
+    right: 125px;
+    bottom: 9px;
 }
 
-  .vlcek {
-    float: right; font-size: 0.6em;
-    }
+.vlcek {
+    float: right;
+    font-size: 0.6em;
+}
 
 .signature {
-  text-align:right;
-  padding-right: 1px;
-  font-size: 0.7em;
-  opacity: 0.7;
+    text-align: right;
+    padding-right: 1px;
+    font-size: 0.7em;
+    opacity: 0.7;
 }
 
 .counter {
-  float: left;
+    float: left;
 }
 
 .info {
-  font-size: 1.2em;
-  padding-bottom: 7px;
-  background-color: white ;
-  position: absolute;
-  text-align: center;
-  
+    font-size: 1.2em;
+    padding-bottom: 7px;
+    background-color: white;
+    position: absolute;
+    text-align: center;
 }
-
 
 /*font
 */
 body {
- 
 }
 .heading {
-  font-weight: 700;
+    font-weight: 700;
 }
 .subheading {
-  font-weight: 300;
+    font-weight: 300;
 }
 
 @font-face {
-  font-family: 'icomoon';
-  src: url('./fonts/icomoon.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+    font-family: 'icomoon';
+    src: url('./fonts/icomoon.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.player {
+    display: 'flex';
+    height: 30px;
 }

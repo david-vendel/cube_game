@@ -65,6 +65,54 @@ const getUniqueID = () => {
     return s4() + s4() + '_' + s4();
 };
 
+const kickOutIfDisconnected = (userID) => {
+    clearTimeout(clients_timeouts[userID]);
+    clients_timeouts[userID] = setTimeout(() => {
+        delete clients[userID];
+
+        console.log(
+            'User ',
+            userID,
+            ' is disconnected, connected users are: ',
+            Object.getOwnPropertyNames(clients)
+        );
+
+        games.forEach((game) => {
+            if (game.player1.id === userID) {
+                game.player1.active = false;
+                game.active = false;
+
+                try {
+                    clients[game.player2.id].send(
+                        JSON.stringify({
+                            type: 'leftGame',
+                            left: game.player1.id,
+                        })
+                    );
+                } catch (err) {
+                    console.warn('Player1 left error');
+                }
+            }
+            if (game.player2?.id === userID) {
+                game.player2.active = false;
+                game.active = false;
+
+                try {
+                    clients[game.player1.id].send(
+                        JSON.stringify({
+                            type: 'leftGame',
+                            left: game.player2.id,
+                        })
+                    );
+                } catch (err) {
+                    console.warn('Player2 left error');
+                }
+            }
+        });
+        console.log('games', games);
+    }, 1000 * CONSTANT + 2200);
+};
+
 app.get('/', (req, res) => {
     console.log('hello');
     res.send('Hello World');
@@ -85,9 +133,9 @@ wss.on('connection', (ws) => {
 
     clients[userID] = ws;
     console.log(
-        'Connected ' + userID + ' in ' + Object.getOwnPropertyNames(clients)
+        'Connected ' + userID + ' connected users are: ',
+        Object.getOwnPropertyNames(clients)
     );
-    console.log('clients', Object.keys(clients));
 
     setTimeout(() => {
         //also ping pong
@@ -99,6 +147,8 @@ wss.on('connection', (ws) => {
                 userID: userID,
             })
         );
+
+        kickOutIfDisconnected(userID);
     }, 30);
 
     ws.on('message', function (message) {
@@ -115,55 +165,79 @@ wss.on('connection', (ws) => {
             console.log('login', pairs);
             pairs.push(userID);
 
-            if (games.length && games[games.length - 1].waiting) {
+            if (
+                games.length &&
+                games[games.length - 1].waiting &&
+                games[games.length - 1].active
+            ) {
                 console.log('There exists a waiting game. I add you in.');
                 games[games.length - 1].player2 = {
                     id: userID,
                     name: parsedMessage.userName,
+                    active: true,
                 };
                 const thisGame = games[games.length - 1];
 
-                clients[thisGame.player1.id].send(
-                    JSON.stringify({
-                        type: 'logIn',
-                        status: 200,
-                        waiting: false,
-                        userID: thisGame.player1,
-                        player1: thisGame.player1,
-                        player2: thisGame.player2,
-                        gameID: thisGame.gameID,
-                    })
-                );
+                try {
+                    clients[thisGame.player1.id].send(
+                        JSON.stringify({
+                            type: 'logIn',
+                            status: 200,
+                            waiting: false,
+                            userID: thisGame.player1.id,
+                            player1: thisGame.player1,
+                            player2: thisGame.player2,
+                            gameID: thisGame.gameID,
+                        })
+                    );
+                } catch (err) {
+                    console.warn('error player1', err);
+                }
 
-                clients[thisGame.player2.id].send(
-                    JSON.stringify({
-                        type: 'logIn',
-                        status: 200,
-                        waiting: false,
-                        userID: thisGame.player2.id,
-                        player1: thisGame.player1,
-                        player2: thisGame.player2,
-                        gameID: thisGame.gameID,
-                    })
-                );
+                try {
+                    console.log('thisGame', thisGame, thisGame.player1);
+                    clients[thisGame.player2.id].send(
+                        JSON.stringify({
+                            type: 'logIn',
+                            status: 200,
+                            waiting: false,
+                            userID: thisGame.player2.id,
+                            player1: thisGame.player1,
+                            player2: thisGame.player2,
+                            gameID: thisGame.gameID,
+                        })
+                    );
+                } catch (err) {
+                    console.warn('error player2', err);
+                }
             } else {
                 console.log('There is no waiting game > create');
                 const newGame = {
-                    player1: { id: userID, name: parsedMessage.userName },
+                    player1: {
+                        id: userID,
+                        name: parsedMessage.userName,
+                        active: true,
+                    },
                     waiting: true,
                     gameID: getUniqueID(),
+                    active: true,
                 };
                 games.push(newGame);
 
-                clients[userID].send(
-                    JSON.stringify({
-                        type: 'logIn',
-                        status: 200,
-                        waiting: true,
-                        userID: userID,
-                        gameID: newGame.gameID,
-                    })
-                );
+                try {
+                    clients[userID].send(
+                        JSON.stringify({
+                            type: 'logIn',
+                            status: 200,
+                            waiting: true,
+                            userID: userID,
+                            gameID: newGame.gameID,
+                            player1: newGame.player1,
+                        })
+                    );
+                } catch (err) {
+                    console.warn('error sitting player to wait', err);
+                }
             }
         }
 
@@ -188,27 +262,21 @@ wss.on('connection', (ws) => {
             // console.log('pingpong', userID);
 
             setTimeout(() => {
-                clients[userID].send(
-                    JSON.stringify({
-                        type: 'pingpong',
-                        playersCount: Object.keys(clients).length,
-                        ping: true,
-                        userID: userID,
-                    })
-                );
+                try {
+                    clients[userID].send(
+                        JSON.stringify({
+                            type: 'pingpong',
+                            playersCount: Object.keys(clients).length,
+                            ping: true,
+                            userID: userID,
+                        })
+                    );
+                } catch (err) {
+                    console.warn('couldnt send pingpong to', userID);
+                }
             }, 1000 * CONSTANT);
 
-            clearTimeout(clients_timeouts[userID]);
-            clients_timeouts[userID] = setTimeout(() => {
-                delete clients[userID];
-
-                console.log(
-                    'User ',
-                    userID,
-                    ' is disconnected, connected users are: ' +
-                        Object.getOwnPropertyNames(clients)
-                );
-            }, 1000 * CONSTANT + 2200);
+            kickOutIfDisconnected(userID);
         }
     });
 });

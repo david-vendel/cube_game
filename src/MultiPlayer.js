@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import Game from './Game';
+import GameM from './GameM';
 import Pair from './components/Pair';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
@@ -18,6 +19,7 @@ console.log('WEBSOCKET_URL', WEBSOCKET_URL);
 let client = new W3CWebSocket(WEBSOCKET_URL);
 let timeout;
 const CONSTANT = 1;
+const EMPTY_PLAYER = { id: null, name: '?', active: false };
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -45,8 +47,8 @@ const MultiPlayer = () => {
     const [waiting, setWaiting] = React.useState(false);
     const [playersCount, setPlayersCount] = React.useState('?');
     const [online, setOnline] = React.useState(false);
-    const [player1, setPlayer1] = React.useState({ id: null, name: '?' });
-    const [player2, setPlayer2] = React.useState({ id: null, name: '?' });
+    const [player1, setPlayer1] = React.useState(EMPTY_PLAYER);
+    const [player2, setPlayer2] = React.useState(EMPTY_PLAYER);
 
     const classes = useStyles();
 
@@ -84,12 +86,50 @@ const MultiPlayer = () => {
 
                     if (!dataFromServer.waiting) {
                         console.log('You got an opponent!');
-                        setPlayer1(dataFromServer.player1);
-                        setPlayer2(dataFromServer.player2);
-                        setMode(3);
+                        setPlayer1({
+                            id: dataFromServer.player1.id,
+                            name: dataFromServer.player1.name,
+                            active: dataFromServer.player1.active,
+                        });
+                        setPlayer2({
+                            id: dataFromServer.player2.id,
+                            name: dataFromServer.player2.name,
+                            active: dataFromServer.player2.active,
+                        });
+
+                        setTimeout(() => {
+                            console.log(
+                                'dataFromServer.player1',
+                                dataFromServer.player1
+                            );
+                            console.log('player1', player1);
+                        }, 500);
+                    } else {
+                        console.log('Waitinf for opponent');
+                        setPlayer1({
+                            id: dataFromServer.player1.id,
+                            name: dataFromServer.player1.name,
+                            active: dataFromServer.player1.active,
+                        });
                     }
                 } else {
                     console.error("server didn't respond with 200 to login");
+                }
+            }
+
+            if (dataFromServer.type === 'leftGame') {
+                console.log('leftGame', dataFromServer, player1, player2);
+
+                const who = dataFromServer.left;
+
+                if (player1.id === who) {
+                    console.log('Player ' + player1.name + ' left. You won!');
+                    window.alert('Player ' + player1.name + ' left. You won!');
+                }
+
+                if (player2.id === who) {
+                    window.alert('Player ' + player2.name + ' left. You won!');
+                    console.log('Player ' + player2.name + ' left. You won!');
                 }
             }
 
@@ -117,7 +157,7 @@ const MultiPlayer = () => {
             console.log('closed');
             closed();
         };
-    }, []);
+    }, [player1, player2]);
 
     const handleNameChange = (e) => {
         setName(e.target.value);
@@ -139,6 +179,9 @@ const MultiPlayer = () => {
 
     const closed = () => {
         setOnline(false);
+        setMode(0);
+        setPlayer1(EMPTY_PLAYER);
+        setPlayer2(EMPTY_PLAYER);
         setPlayersCount('?');
         setInterval(() => {
             reconnect();
@@ -155,6 +198,10 @@ const MultiPlayer = () => {
         //         userID: userID,
         //     })
         // );
+    };
+
+    const clickedCB = (x, y) => {
+        // console.log('clicked', x, y);
     };
 
     return (
@@ -175,7 +222,11 @@ const MultiPlayer = () => {
                             margin: 8,
                         }}
                     ></div>
-                    Number of players online: {playersCount}
+                    {playersCount === '?' ? (
+                        <span>Server is offline</span>
+                    ) : (
+                        <span>Number of players online: {playersCount}</span>
+                    )}
                 </div>
                 <div
                     style={{
@@ -193,19 +244,32 @@ const MultiPlayer = () => {
                     >
                         Singleplayer
                     </button>
-                    <button
-                        style={{
-                            cursor: 'pointer',
-                            border:
-                                mode === 1 || mode === 2
-                                    ? '2px solid'
-                                    : '1px solid',
-                            borderRadius: 3,
-                        }}
-                        onClick={() => setMode(1)}
-                    >
-                        Multiplayer
-                    </button>
+                    {playersCount !== '?' ? (
+                        <button
+                            style={{
+                                cursor: 'pointer',
+                                border:
+                                    mode === 1 || mode === 2
+                                        ? '2px solid'
+                                        : '1px solid',
+                                borderRadius: 3,
+                            }}
+                            onClick={() => setMode(1)}
+                        >
+                            Multiplayer
+                        </button>
+                    ) : (
+                        <button
+                            style={{
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderRadius: 3,
+                            }}
+                            onClick={() => window.location.reload()}
+                        >
+                            Refresh
+                        </button>
+                    )}
                 </div>
                 {mode === 1 && (
                     <div className={classes.root}>
@@ -245,10 +309,9 @@ const MultiPlayer = () => {
                                 {name} {userID}
                             </b>
                         </div>
-                        <div>waiting...</div>
                     </>
                 )}
-                {mode === 3 && (
+                {mode === 2 && (
                     <>
                         <div
                             style={{
@@ -264,6 +327,13 @@ const MultiPlayer = () => {
             </div>
 
             {mode === 0 && <Game />}
+            {mode === 2 && (
+                <GameM
+                    player1={player1}
+                    player2={player2}
+                    clickedCB={clickedCB}
+                />
+            )}
         </div>
     );
 };

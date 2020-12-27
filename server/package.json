@@ -10,7 +10,6 @@
     "author": "David Vendel <33971649+justdvl@users.noreply.github.com>",
     "license": "MIT",
     "dependencies": {
-        "graphql-yoga": "^1.18.3",
         "html": "^1.0.0",
         "socket.io": "^3.0.4",
         "websocket": "^1.0.32",
