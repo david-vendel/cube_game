@@ -1,10 +1,12 @@
-const webSocketsServerPort = 8000;
+const webSocketsServerPort = 8001;
 const webSocketServer = require('websocket').server;
 const http = require('http');
-
+const express = require('express');
+const app = express();
 //spinning the http server and the websocket server.
-const server = http.createServer();
+const server = http.createServer(app);
 server.listen(webSocketsServerPort);
+
 console.log('listening on port ' + webSocketsServerPort);
 
 const wsServer = new webSocketServer({
@@ -23,6 +25,12 @@ const getUniqueID = () => {
             .substring(1);
     return s4() + s4() + '_' + s4();
 };
+
+app.get('/', (req, res) => {
+    console.log('hello');
+    res.send('Hello World');
+    // res.sendFile(path.join(__dirname, "static", "index.html"));
+});
 
 wsServer.on('request', (request) => {
     var userID = getUniqueID();

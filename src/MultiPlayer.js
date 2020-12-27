@@ -7,7 +7,7 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
-let client = new W3CWebSocket('ws://127.0.0.1:8000');
+let client = new W3CWebSocket('wss://159.89.26.195:8001');
 let timeout;
 
 const useStyles = makeStyles((theme) => ({
