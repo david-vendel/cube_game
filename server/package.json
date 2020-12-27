@@ -12,6 +12,8 @@
     "dependencies": {
         "graphql-yoga": "^1.18.3",
         "html": "^1.0.0",
-        "websocket": "^1.0.32"
+        "socket.io": "^3.0.4",
+        "websocket": "^1.0.32",
+        "ws": "^7.4.1"
     }
 }

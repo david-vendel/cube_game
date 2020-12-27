@@ -7,8 +7,9 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
-let client = new W3CWebSocket('wss://159.89.26.195:8001');
+let client = new W3CWebSocket('wss://davidvendel.com/ws/');
 let timeout;
+const CONSTANT = 10;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -36,6 +37,8 @@ const MultiPlayer = () => {
     const [waiting, setWaiting] = React.useState(false);
     const [playersCount, setPlayersCount] = React.useState('?');
     const [online, setOnline] = React.useState(false);
+    const [player1, setPlayer1] = React.useState({ id: null, name: '?' });
+    const [player2, setPlayer2] = React.useState({ id: null, name: '?' });
 
     const classes = useStyles();
 
@@ -63,10 +66,18 @@ const MultiPlayer = () => {
             }
 
             if (dataFromServer.type === 'logIn') {
-                console.log('waiting is ', dataFromServer);
+                console.log('loginIS is ', dataFromServer);
                 if (dataFromServer?.status === 200) {
+                    console.log('got 200');
                     setWaiting(dataFromServer.waiting);
                     setUserID(dataFromServer.userID);
+
+                    if (!dataFromServer.waiting) {
+                        console.log('You got an opponent!');
+                        setPlayer1(dataFromServer.player1);
+                        setPlayer2(dataFromServer.player2);
+                        setMode(3);
+                    }
                 } else {
                     console.error("server didn't respond with 200 to login");
                 }
@@ -88,7 +99,7 @@ const MultiPlayer = () => {
                 timeout = setTimeout(() => {
                     console.log("server didn't reply!");
                     closed();
-                }, 2200);
+                }, 1000 * CONSTANT + 2200);
             }
         };
 
@@ -118,9 +129,10 @@ const MultiPlayer = () => {
 
     const closed = () => {
         setOnline(false);
+        setPlayersCount('?');
         setInterval(() => {
             reconnect();
-        }, 5000);
+        }, 5000 * CONSTANT);
     };
 
     const reconnect = () => {
@@ -195,7 +207,7 @@ const MultiPlayer = () => {
                             InputProps={{
                                 className: classes.input,
                             }}
-                            value="Anonym"
+                            value={name}
                             onChange={handleNameChange}
                         />
                         <Button
@@ -210,19 +222,34 @@ const MultiPlayer = () => {
                     </div>
                 )}
                 {mode === 2 && (
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            marginTop: 10,
-                        }}
-                    >
-                        Playing as&nbsp;{' '}
-                        <b>
-                            {' '}
-                            {name} {userID}
-                        </b>
-                    </div>
+                    <>
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                marginTop: 10,
+                            }}
+                        >
+                            Playing as&nbsp;
+                            <b>
+                                {name} {userID}
+                            </b>
+                        </div>
+                        <div>waiting...</div>
+                    </>
+                )}
+                {mode === 3 && (
+                    <>
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                marginTop: 10,
+                            }}
+                        >
+                            {player1.name} vs {player2.name}
+                        </div>
+                    </>
                 )}
             </div>
 
