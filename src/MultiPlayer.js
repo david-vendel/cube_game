@@ -9,7 +9,7 @@ import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 let client = new W3CWebSocket('wss://davidvendel.com/ws/');
 let timeout;
-const CONSTANT = 10;
+const CONSTANT = 1;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -51,7 +51,9 @@ const MultiPlayer = () => {
         client.onmessage = (message) => {
             const dataFromServer = JSON.parse(message.data);
 
-            console.log('got reply! ', dataFromServer);
+            if (dataFromServer.type !== 'pingpong') {
+                console.log('Got msg from server! ', dataFromServer);
+            }
 
             if (dataFromServer.type === 'message') {
                 this.setState((state) => ({
@@ -84,7 +86,7 @@ const MultiPlayer = () => {
             }
 
             if (dataFromServer.type === 'pingpong') {
-                console.log('playersCount is ', dataFromServer);
+                // console.log('playersCount is ', dataFromServer);
                 setPlayersCount(dataFromServer.playersCount);
 
                 client.send(

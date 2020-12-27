@@ -24,7 +24,7 @@ server.listen(webSocketsServerPort, () => {
 // const io = require('socket.io').listen(https);
 const wss = new WebSocket.Server({ server });
 
-const CONSTANT = 10;
+const CONSTANT = 1;
 
 // const wsServer = new webSocketServer({
 //     server: https,
@@ -84,12 +84,18 @@ wss.on('connection', (ws) => {
     }, 30);
 
     ws.on('message', function (message) {
-        console.log('Received Message: ', message, JSON.parse(message).type);
+        const parsedMessage = JSON.parse(message);
 
+        if (parsedMessage.type !== 'pingpong') {
+            console.log(
+                'Received Message: ',
+                parsedMessage,
+                parsedMessage?.type
+            );
+        }
         if (JSON.parse(message).type === 'logIn') {
             console.log('login', pairs);
             pairs.push(userID);
-            const parsedMessage = JSON.parse(message);
 
             if (games.length && games[games.length - 1].waiting) {
                 console.log('There exists a waiting game. I add you in.');
@@ -141,27 +147,6 @@ wss.on('connection', (ws) => {
                     })
                 );
             }
-
-            // if (pairs.length % 2 === 1) {
-            //     console.log('length is modulo 1');
-            //     clients[userID].send(
-            //         JSON.stringify({
-            //             type: 'logIn',
-            //             status: 200,
-            //             waiting: true,
-            //             userID: userID,
-            //         })
-            //     );
-            // } else {
-            //     console.log('length modulo 0 ');
-            //     previousUserID = pairs[pairs.length - 2];
-            //     clients[userID].send(
-            //         JSON.stringify({ type: 'logIn', waiting: false })
-            //     );
-            //     clients[previousUserID].send(
-            //         JSON.stringify({ type: 'logIn', waiting: false })
-            //     );
-            // }
         }
 
         if (JSON.parse(message).type === 'message') {
@@ -182,7 +167,7 @@ wss.on('connection', (ws) => {
 
         if (JSON.parse(message).type === 'pingpong') {
             const userID = JSON.parse(message).userID;
-            console.log('pingpong', userID);
+            // console.log('pingpong', userID);
 
             setTimeout(() => {
                 clients[userID].send(
