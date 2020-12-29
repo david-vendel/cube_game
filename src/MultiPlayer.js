@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useRef, useState } from 'react';
 import './App.css';
 import Game from './Game';
 import GameM from './GameM';
@@ -9,6 +9,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import Snackbar from '@material-ui/core/Snackbar';
 import { useSnackbar } from 'notistack';
+import Board from './components/Board';
 
 const PRODUCTION_MODE = process.env.NODE_ENV === 'production';
 
@@ -44,6 +45,18 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
+function useAsyncReference(value) {
+    const ref = useRef(value);
+    const [, forceRender] = useState(false);
+
+    function updateState(newState) {
+        ref.current = newState;
+        forceRender((s) => !s);
+    }
+
+    return [ref, updateState];
+}
+
 const MultiPlayer = () => {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
@@ -52,10 +65,9 @@ const MultiPlayer = () => {
         'Anonym ' + Math.ceil(Math.random() * 99)
     );
     const [userID, setUserID] = React.useState('');
-    const [gameID, setGameID] = React.useState('');
+    const [gameID, setGameID] = useAsyncReference('-');
     const [waiting, setWaiting] = React.useState(false);
     const [playersCount, setPlayersCount] = React.useState('?');
-    const [online, setOnline] = React.useState(false);
     const [player1, setPlayer1] = React.useState(EMPTY_PLAYER);
     const [player2, setPlayer2] = React.useState(EMPTY_PLAYER);
     const prevMode = usePrevious(mode);
@@ -63,6 +75,10 @@ const MultiPlayer = () => {
     const [moves, setMoves] = React.useState([]);
     const [render, setRender] = React.useState(0);
     const [lost, setLost] = React.useState(null);
+    const [grid, setGrid] = React.useState('-');
+    const [gamesToSend, setGamesToSend] = React.useState('[]');
+
+    const [resetBoard, setResetBoard] = React.useState(1);
 
     const classes = useStyles();
 
@@ -95,12 +111,10 @@ const MultiPlayer = () => {
                 JSON.stringify({
                     type: 'resign',
                     userID: userID,
-                    gameID: gameID,
+                    gameID: gameID.current,
                 })
             );
             restartGame();
-        }
-        if (gameID) {
         }
     };
 
@@ -117,11 +131,18 @@ const MultiPlayer = () => {
     React.useEffect(() => {
         client.onopen = () => {
             console.log('WebSocket Client Connected');
-            setOnline(true);
             enqueueSnackbar('Server online', {
                 variant: 'success',
                 autoHideDuration: 1300,
             });
+
+            setTimeout(() => {
+                client.send(
+                    JSON.stringify({
+                        type: 'broadcast',
+                    })
+                );
+            }, 250);
         };
 
         client.onmessage = (message) => {
@@ -131,20 +152,20 @@ const MultiPlayer = () => {
                 console.log('Got msg from server! ', dataFromServer);
             }
 
-            if (dataFromServer.type === 'message') {
-                this.setState((state) => ({
-                    messages: [
-                        ...state.messages,
-                        {
-                            msg: dataFromServer.msg,
-                            user: dataFromServer.user,
-                        },
-                    ],
-                }));
-            }
+            // if (dataFromServer.type === 'message') {
+            //     this.setState((state) => ({
+            //         messages: [
+            //             ...state.messages,
+            //             {
+            //                 msg: dataFromServer.msg,
+            //                 user: dataFromServer.user,
+            //             },
+            //         ],
+            //     }));
+            // }
 
             if (dataFromServer.type === 'clicked') {
-                if (dataFromServer.gameID !== gameID) {
+                if (dataFromServer.gameID !== gameID.current) {
                     console.error('this is wrong game');
                     enqueueSnackbar('this is wrong game', {
                         variant: 'error',
@@ -163,6 +184,21 @@ const MultiPlayer = () => {
                 setRender((render) => render + 1);
             }
 
+            if (dataFromServer.type === 'broadcast') {
+                // console.log(
+                //     'gamesToSend',
+                //     dataFromServer.gameID,
+                //     dataFromServer.gamesToSend
+                // );
+                // setGrid(dataFromServer.grid);
+                console.log(
+                    'received broadcast',
+                    dataFromServer?.gamesToSend?.length
+                );
+                setGamesToSend(dataFromServer.gamesToSend);
+                setRender((render) => render + 1);
+            }
+
             if (dataFromServer.type === 'logIn') {
                 console.log('loginIS is ', dataFromServer);
                 if (dataFromServer?.status === 200) {
@@ -175,7 +211,9 @@ const MultiPlayer = () => {
                         enqueueSnackbar('You got an opponent!', {
                             variant: 'success',
                         });
-                        setGameID(dataFromServer.gameID);
+                        // console.log('set gameID', dataFromServer.gameID);
+                        //     setGameIDExernal(dataFromServer.gameID)
+                        // setGameID(dataFromServer.gameID);
                         setPlayer1({
                             id: dataFromServer.player1.id,
                             name: dataFromServer.player1.name,
@@ -197,8 +235,10 @@ const MultiPlayer = () => {
                             name: dataFromServer.player1.name,
                             active: dataFromServer.player1.active,
                         });
-                        setGameID(dataFromServer.gameID);
                     }
+
+                    console.log('set gameID', dataFromServer.gameID);
+                    setGameIDExernal(dataFromServer.gameID);
                 } else {
                     console.error("server didn't respond with 200 to login");
                 }
@@ -257,7 +297,7 @@ const MultiPlayer = () => {
             console.log('closed');
             closed();
         };
-    }, [player1, player2, gameID, mode]);
+    }, [player1, player2, gameID.current, mode]);
 
     const handleNameChange = (e) => {
         setName(e.target.value);
@@ -285,12 +325,16 @@ const MultiPlayer = () => {
                 setLost(null);
             }, 100);
             setMode(1);
-            setGameID(null);
+            console.log('set gameID', null);
+
+            // setGameID(null);
+            setGameIDExernal('-');
             setPlayer1(EMPTY_PLAYER);
             setPlayer2(EMPTY_PLAYER);
             enqueueSnackbar('Game end', {
                 variant: 'warning',
             });
+            setResetBoard((resetBoard) => resetBoard + 1);
         }
     };
 
@@ -303,7 +347,7 @@ const MultiPlayer = () => {
             JSON.stringify({
                 type: 'cancel',
                 userID: name,
-                gameID: gameID,
+                gameID: gameID.current,
             })
         );
 
@@ -312,7 +356,6 @@ const MultiPlayer = () => {
 
     const closed = () => {
         console.warn('closed');
-        setOnline(false);
         setMode(0);
         setPlayer1(EMPTY_PLAYER);
         setPlayer2(EMPTY_PLAYER);
@@ -335,7 +378,7 @@ const MultiPlayer = () => {
     };
 
     const clickedCB = (x, y) => {
-        console.log('clicked', x, y);
+        console.log('clickedCB', x, y);
 
         client.send(
             JSON.stringify({
@@ -343,13 +386,39 @@ const MultiPlayer = () => {
                 x: x,
                 y: y,
                 userID: userID,
-                gameID: gameID,
+                gameID: gameID.current,
             })
         );
     };
 
-    console.log('moves', moves);
+    const setGameIDExernal = (x) => {
+        console.log('externally setting game ID', x);
+        setGameID(x);
+    };
 
+    console.log('gameID mp', gameID);
+
+    const test = () => {
+        console.log('gameID test', gameID.current);
+    };
+
+    const broadcast = (x, y, gridStringified) => {
+        console.log('broadcast', x, y, gameID.current);
+        test();
+        if (!gameID.current) {
+            console.error('missing game ID');
+        }
+
+        client.send(
+            JSON.stringify({
+                type: 'broadcast',
+                gameID: gameID.current,
+                grid: gridStringified,
+            })
+        );
+    };
+
+    console.log('multiplayer render');
     return (
         <div style={{ paddingTop: 50 }}>
             <div
@@ -364,7 +433,8 @@ const MultiPlayer = () => {
                             width: 10,
                             height: 10,
                             borderRadius: '50%',
-                            backgroundColor: online ? 'green' : 'red',
+                            backgroundColor:
+                                playersCount === '?' ? 'red' : 'green',
                             margin: 8,
                         }}
                     ></div>
@@ -479,7 +549,7 @@ const MultiPlayer = () => {
                             }}
                         >
                             game:&nbsp;
-                            <b>{gameID}</b>
+                            <b>{gameID.current}</b>
                         </div>
                     </>
                 )}
@@ -510,8 +580,46 @@ const MultiPlayer = () => {
                     notStarted={mode === 1}
                     newGame={restartGame}
                     cancelGame={cancelGame}
+                    broadcast={broadcast}
+                    gameID={gameID.current}
+                    resetBoard={resetBoard}
                 />
             )}
+
+            <div style={{ display: 'flex', marginTop: 30, marginLeft: 20 }}>
+                Broadcast:
+            </div>
+            <div
+                style={{
+                    marginLeft: 10,
+                    marginTop: 1,
+                    marginBottom: 10,
+                    display: 'flex',
+                    flexFlow: 'row wrap',
+                }}
+            >
+                {gamesToSend &&
+                    JSON.parse(gamesToSend).map((game) => {
+                        console.log(
+                            'multiplayer mapping games',
+                            game.gameID,
+                            game.grid?.length
+                        );
+                        return (
+                            <div key={game.gameID} style={{ margin: 10 }}>
+                                <div>game&nbsp;{game.gameID}</div>
+
+                                <Board
+                                    sizex={5}
+                                    sizey={5}
+                                    dice={'dice'}
+                                    moves={[]}
+                                    forcedGrid={game.grid}
+                                />
+                            </div>
+                        );
+                    })}
+            </div>
         </div>
     );
 };

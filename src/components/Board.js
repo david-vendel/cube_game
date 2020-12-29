@@ -9,6 +9,7 @@ const Board = ({
     sizex,
     sizey,
     clickedCB,
+    broadcast,
     turn,
     setTurn,
     dice,
@@ -16,6 +17,8 @@ const Board = ({
     yourColor,
     moves,
     multiplayer,
+    forcedGrid,
+    gameID,
 }) => {
     //dice is whether graphics is number or dice
 
@@ -94,6 +97,27 @@ const Board = ({
     const [queue, setQueue] = React.useState([]);
     const [gameInterval, setGameInterval] = React.useState(null);
 
+    React.useEffect(() => {
+        if (forcedGrid && forcedGrid !== '-') {
+            console.log('forcedGrid', JSON.parse(forcedGrid)[0][0]);
+            setGrid(JSON.parse(forcedGrid));
+        }
+    }, [forcedGrid]);
+
+    // React.useEffect(() => {
+    //     console.log('gamesToSend', gamesToSend);
+    //     if (gamesToSend && gamesToSend !== '-') {
+    //         console.log('changing gamesToSend');
+
+    //         const gamesParsed = JSON.parse(gamesToSend);
+    //         console.log('games parsed', gamesParsed);
+    //         gamesParsed.forEach((g) => {
+    //             console.log('g', g);
+    //         });
+    //         // setGrid(JSON.parse(forcedGrid));
+    //     }
+    // }, [gamesToSend]);
+
     const colorBlink = (a, b, color = 'white') => {
         // console.log('colorblink', a, b, 'color');
 
@@ -158,12 +182,15 @@ const Board = ({
             newGrid[a][b].c = thatColor;
             console.log('not exploding');
             setGrid(newGrid);
+
             if (who === 'opponent') {
                 console.log('click was by opponent. your turn');
                 setTurn(true);
             } else {
                 console.log('click was by you. not your turn');
+                console.log('gameID:', gameID);
                 setTurn(false);
+                broadcast(a, b, JSON.stringify(newGrid), gameID);
             }
         }
 
@@ -210,6 +237,7 @@ const Board = ({
         qq.unshift([a, b, thatColor, 'explode', who, 1]);
 
         setGrid(newGrid);
+
         setQueue(qq);
 
         // setTimeout(() => {
@@ -230,6 +258,10 @@ const Board = ({
             if (!turn) {
                 return;
             }
+        }
+
+        if (forcedGrid) {
+            return;
         }
 
         console.log('boxClicked ', a, b, ' setting turn false');
@@ -294,9 +326,50 @@ const Board = ({
         };
     }, []);
 
-    // React.useEffect(() => {
-    //     setGrid(drawBoard());
-    // }, [resetBoard]);
+    React.useEffect(() => {
+        console.log('resetBoard', resetBoard);
+        if (resetBoard && resetBoard > 1) {
+            drawBoard();
+        }
+    }, [resetBoard]);
+
+    const drawBoard = () => {
+        console.log('draw board');
+        const GRID = [0, 0, 0, 0, 0].map((line) => {
+            return [0, 0, 0, 0, 0].map((x) => {
+                return {
+                    p: 0,
+                    d: 'black',
+                    c: '',
+                    p: 0,
+                    buttonGrid: 35,
+                    diceGrid: 55,
+                };
+            });
+        });
+
+        GRID[1][1].c = 'limegreen';
+        GRID[0][1].c = 'limegreen';
+        GRID[1][0].c = 'limegreen';
+        GRID[0][0].c = 'limegreen';
+
+        GRID[3][3].c = 'red';
+        GRID[3][4].c = 'red';
+        GRID[4][3].c = 'red';
+        GRID[4][4].c = 'red';
+
+        GRID[1][1].p = 5;
+        GRID[0][1].p = 3;
+        GRID[1][0].p = 3;
+        GRID[0][0].p = 6;
+
+        GRID[3][3].p = 5;
+        GRID[3][4].p = 3;
+        GRID[4][3].p = 3;
+        GRID[4][4].p = 6;
+
+        setGrid(GRID);
+    };
 
     React.useEffect(() => {
         console.log('moves changed', moves.length, moves);
@@ -376,7 +449,14 @@ const Board = ({
         return arr2;
     };
 
-    return <div>{makeSquare()}</div>;
+    console.log('board render', forcedGrid?.length, gameID);
+
+    return (
+        <div>
+            {gameID}
+            {makeSquare()}
+        </div>
+    );
 };
 
 export default Board;

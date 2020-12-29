@@ -29,6 +29,7 @@ const WebSocket = require('ws');
 
 let server;
 const uniqueIDs = [];
+gamesHistory = {};
 
 if (PRODUCTION_MODE) {
     const options = {
@@ -280,21 +281,21 @@ wss.on('connection', (ws) => {
             }
         }
 
-        if (JSON.parse(message).type === 'message') {
-            console.log('message came', pairs_name, JSON.parse(message).user);
+        // if (JSON.parse(message).type === 'message') {
+        //     console.log('message came', pairs_name, JSON.parse(message).user);
 
-            for (let i = 0; i < pairs.length; i++) {
-                if (JSON.parse(message).user === pairs_name[i]) {
-                    clients[pairs[i]].send(message);
-                    clients[pairs[i]].close();
-                    if (i % 2 === 0) {
-                        clients[pairs[i + 1]].send(message);
-                    } else {
-                        clients[pairs[i - 1]].send(message);
-                    }
-                }
-            }
-        }
+        //     for (let i = 0; i < pairs.length; i++) {
+        //         if (JSON.parse(message).user === pairs_name[i]) {
+        //             clients[pairs[i]].send(message);
+        //             clients[pairs[i]].close();
+        //             if (i % 2 === 0) {
+        //                 clients[pairs[i + 1]].send(message);
+        //             } else {
+        //                 clients[pairs[i - 1]].send(message);
+        //             }
+        //         }
+        //     }
+        // }
 
         if (JSON.parse(message).type === 'resign') {
             console.log(
@@ -378,6 +379,34 @@ wss.on('connection', (ws) => {
                         );
                     }
                 }
+            });
+        }
+
+        if (parsedMessage.type === 'broadcast') {
+            console.log('broadcast  from game ', parsedMessage.gameID);
+
+            if (parsedMessage.grid) {
+                gamesHistory[parsedMessage.gameID] = parsedMessage.grid;
+            }
+
+            let gamesToSend = [];
+            games.slice(-2).forEach((g) => {
+                gamesToSend.push({
+                    gameID: g.gameID,
+                    grid: gamesHistory[g.gameID],
+                });
+            });
+
+            const keys = Object.keys(clients);
+            keys.forEach((key) => {
+                clients[key].send(
+                    JSON.stringify({
+                        type: 'broadcast',
+                        gameID: parsedMessage.gameID,
+                        // grid: parsedMessage.grid,
+                        gamesToSend: JSON.stringify(gamesToSend),
+                    })
+                );
             });
         }
 

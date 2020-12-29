@@ -3,8 +3,8 @@ import Button from '@material-ui/core/Button';
 
 //intro is the first line, changing between instructions, win or lose statement.
 const Intro = ({ yourColor, green, sizex, sizey, turn, lost, newGame }) => {
-    console.log('yourColor', yourColor);
-    console.log('lost', lost);
+    // console.log('yourColor', yourColor);
+    // console.log('lost', lost);
 
     // return (
     //     <div className="riadok intro">

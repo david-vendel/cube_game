@@ -12,11 +12,14 @@ const GameM = ({
     player1,
     player2,
     userID,
+    gameID,
     moves,
     lost,
     newGame,
     cancelGame,
     notStarted,
+    broadcast,
+    resetBoard,
 }) => {
     const multiplayer = true; // this is true for multiplayer mode
 
@@ -44,11 +47,10 @@ const GameM = ({
     const sizey = 5;
     const [turn, setTurn] = React.useState(true);
     const [dice, setDice] = React.useState(diceHere);
-    const [resetBoard, setResetBoard] = React.useState(false);
     const [yourColor, setYourColor] = React.useState('undefined');
 
     const reset = () => {
-        setResetBoard(!resetBoard);
+        // setResetBoard(!resetBoard);
     };
 
     const changeDice = () => {
@@ -112,6 +114,8 @@ const GameM = ({
                     yourColor={yourColor}
                     moves={moves}
                     multiplayer={multiplayer}
+                    broadcast={broadcast}
+                    gameID={gameID}
                 />
             </LoadingOverlay>
             {!notStarted && <Player number={2} object={player2} />}
