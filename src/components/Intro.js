@@ -1,48 +1,53 @@
 import React, { Component } from 'react';
+import Button from '@material-ui/core/Button';
 
 //intro is the first line, changing between instructions, win or lose statement.
-const Intro = (green, sizex, sizey, turn) => {
-    const versionSpan = <span className="version">Multi</span>;
+const Intro = ({ yourColor, green, sizex, sizey, turn, lost, newGame }) => {
+    console.log('yourColor', yourColor);
+    console.log('lost', lost);
 
-    if (green == sizex * sizey) {
+    // return (
+    //     <div className="riadok intro">
+    //         <span style={{ fontSize: 45, color: 'green' }}>YOU WON!</span>
+    //         {versionSpan}
+    //     </div>
+    // );
+    if (lost) {
         return (
             <div className="riadok intro">
-                <span style={{ fontSize: 45, color: 'green' }}>YOU WON!</span>
-                {versionSpan}
+                <div
+                    style={{
+                        fontSize: 22,
+                        color: 'red',
+                        textAlign: 'center',
+                        marginBottom: 7,
+                    }}
+                >
+                    {lost} LOST!
+                </div>
+                <div style={{ float: 'right' }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={newGame}
+                    >
+                        New game
+                    </Button>
+                </div>
             </div>
         );
     } else {
-        if (green == 0) {
-            return (
-                <div className="riadok intro">
-                    <span style={{ fontSize: 45, color: 'red' }}>
-                        YOU LOST!
-                    </span>
-                    {versionSpan}
-                </div>
-            );
-        } else {
-            if (turn) {
-                return (
-                    <div className="riadok intro">
-                        You are <span style={{ color: 'green' }}>green</span>.
-                        Conquer <br />
-                        the whole area to win.{versionSpan}
-                    </div>
-                );
-            } else {
-                return (
-                    <div className="riadok intro">
-                        You are <span style={{ color: 'darkred' }}>green</span>.
-                        Conquer <br />
-                        the whole area to win.{versionSpan}
-                    </div>
-                );
-            }
-        }
+        return (
+            <div className="riadok intro">
+                You are{' '}
+                <span style={{ color: yourColor }}>
+                    {yourColor.replace('lime', '')}
+                </span>
+                . Conquer <br />
+                the whole area to win.
+            </div>
+        );
     }
-
-    return null;
 };
 
 export default Intro;

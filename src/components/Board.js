@@ -3,6 +3,7 @@ import _ from 'lodash';
 
 //intro is the first line, changing between instructions, win or lose statement.
 const INTERVAL = 250;
+const STAR = '✸';
 
 const Board = ({
     sizex,
@@ -12,52 +13,89 @@ const Board = ({
     setTurn,
     dice,
     resetBoard,
+    yourColor,
+    moves,
+    multiplayer,
 }) => {
     //dice is whether graphics is number or dice
 
-    const drawBoard = () => {
-        const GRID = Array.from({ length: sizey }, () =>
-            Array.from({ length: sizex }, () => ({
+    // const drawBoard = () => {
+    // const GRID = Object.freeze(
+    //     Array.from({ length: sizey }, () =>
+    //         Object.freeze(
+    //             Array.from({ length: sizex }, () => ({
+    //                 p: 0,
+    //                 d: 'black',
+    //                 c: '',
+    //                 p: 0,
+    //                 buttonGrid: 35,
+    //                 diceGrid: 55,
+    //             }))
+    //         )
+    //     )
+    // );
+
+    const GRID = [0, 0, 0, 0, 0].map((line) => {
+        return [0, 0, 0, 0, 0].map((x) => {
+            return {
                 p: 0,
                 d: 'black',
                 c: '',
                 p: 0,
                 buttonGrid: 35,
                 diceGrid: 55,
-            }))
-        );
+            };
+        });
+    });
+    // .map((line, a) => {
+    //     return line.map((x, b) => {
+    //         if (a < 2 && b < 2) {
+    //             x.c = 'limegreen';
+    //             x.p = 5;
+    //         }
+    //         return x;
+    //     });
+    // });
 
-        GRID[1][1].c = 'limegreen';
-        GRID[0][1].c = 'limegreen';
-        GRID[1][0].c = 'limegreen';
-        GRID[0][0].c = 'limegreen';
+    GRID[1][1].c = 'limegreen';
+    GRID[0][1].c = 'limegreen';
+    GRID[1][0].c = 'limegreen';
+    GRID[0][0].c = 'limegreen';
+    // GRID[2][0].c = 'limegreen';
+    // GRID[2][1].c = 'limegreen';
+    // GRID[0][2].c = 'limegreen';
+    // GRID[1][2].c = 'limegreen';
 
-        GRID[3][3].c = 'red';
-        GRID[3][4].c = 'red';
-        GRID[4][3].c = 'red';
-        GRID[4][4].c = 'red';
+    GRID[3][3].c = 'red';
+    GRID[3][4].c = 'red';
+    GRID[4][3].c = 'red';
+    GRID[4][4].c = 'red';
+    // GRID[2][4].c = 'red';
+    // GRID[2][3].c = 'red';
+    // GRID[3][2].c = 'red';
+    // GRID[4][2].c = 'red';
 
-        GRID[1][1].p = 4;
-        GRID[0][1].p = 3;
-        GRID[1][0].p = 3;
-        GRID[0][0].p = 6;
+    GRID[1][1].p = 5;
+    GRID[0][1].p = 3;
+    GRID[1][0].p = 3;
+    GRID[0][0].p = 6;
 
-        GRID[3][3].p = 5;
-        GRID[3][4].p = 3;
-        GRID[4][3].p = 3;
-        GRID[4][4].p = 6;
+    GRID[3][3].p = 5;
+    GRID[3][4].p = 3;
+    GRID[4][3].p = 3;
+    GRID[4][4].p = 6;
 
-        return GRID;
-    };
+    //     return GRID;
+    // };
 
-    const GRID = drawBoard();
-    const [grid, setGrid] = React.useState([...GRID]);
+    // const GRID = drawBoard();
+    const [grid, setGrid] = React.useState(GRID);
     const [render, setRender] = React.useState(0);
     const [queue, setQueue] = React.useState([]);
     const [gameInterval, setGameInterval] = React.useState(null);
 
     const colorBlink = (a, b, color = 'white') => {
-        console.log('colorblink', a, b, 'color');
+        // console.log('colorblink', a, b, 'color');
 
         let newGrid = [...grid];
         newGrid[a][b].d = color;
@@ -76,8 +114,13 @@ const Board = ({
     };
 
     //parametres are: 2 coordinates, color of given move (color is changing during explosion, when player is conquering surrounding squares. color is stored in state field c. source tells if move is exploding move, to animate it accordingly)
-    const moveDice = (a, b, myColor, source = 'none') => {
-        console.log('dice moved', a, b, myColor, source);
+    const moveDice = (a, b, thatColor, source = 'none', who, hardSet) => {
+        console.log('dice moved', a, b, thatColor, source, who);
+
+        if (who !== 'opponent' && source !== 'explode') {
+            console.log('sending to server');
+            clickedCB(a, b);
+        }
 
         if (source == 'explode') {
             colorBlink(a, b, 'red');
@@ -86,7 +129,8 @@ const Board = ({
         }
 
         // const newGrid =_.cloneDeep(grid);
-        const newGrid = [...grid];
+        // const newGrid = [...grid];
+        const newGrid = grid.map((inner) => inner.slice());
 
         // var cc = this.state.c;
         // pp[a][b] = boxValue;
@@ -102,21 +146,43 @@ const Board = ({
         //     this.explode(a, b, ccc);
         // }
 
-        if (1 + grid[a][b].p > 6) {
-            explode(a, b, myColor);
-        } else {
-            newGrid[a][b].p = 1 + grid[a][b].p;
-            newGrid[a][b].c = myColor;
-
-            setGrid(newGrid);
+        if (newGrid[a][b].p === STAR) {
+            console.log("it's a star!");
+            newGrid[a][b].p = 0;
         }
 
-        setTurn(false);
-        setRender(render + 1);
+        if (1 + newGrid[a][b].p > 6) {
+            explode(a, b, thatColor, who);
+        } else {
+            newGrid[a][b].p = 1 + newGrid[a][b].p;
+            newGrid[a][b].c = thatColor;
+            console.log('not exploding');
+            setGrid(newGrid);
+            if (who === 'opponent') {
+                console.log('click was by opponent. your turn');
+                setTurn(true);
+            } else {
+                console.log('click was by you. not your turn');
+                setTurn(false);
+            }
+        }
+
+        if (queue.length === 1) {
+            console.log('queu length is 1, explosion happened');
+            if (who === 'opponent') {
+                console.log('click was by opponent. your turn');
+                setTurn(true);
+            } else {
+                console.log('click was by you. not your turn');
+                setTurn(false);
+            }
+        }
+
+        // setRender(render + 1);
     };
 
-    const explode = (a, b, myColor) => {
-        console.log('dice explode ', a, b, myColor);
+    const explode = (a, b, thatColor, who) => {
+        console.log('dice explode ', a, b, thatColor, who);
         // var qq = this.state.queue;
         // var cc = this.state.c;
         //var ccc = cc[a][b] //current color from c array
@@ -124,67 +190,51 @@ const Board = ({
 
         const qq = queue;
 
+        // const newGrid = [...grid];
+        const newGrid = grid.map((inner) => inner.slice());
+
+        newGrid[a][b].p = STAR;
+
         if (a > 0) {
-            qq.unshift([a - 1, b, myColor, 'explode']);
+            qq.unshift([a - 1, b, thatColor, 'explode', who]);
         }
         if (b > 0) {
-            qq.unshift([a, b - 1, myColor, 'explode']);
+            qq.unshift([a, b - 1, thatColor, 'explode', who]);
         }
         if (a < sizey - 1) {
-            qq.unshift([a + 1, b, myColor, 'explode']);
+            qq.unshift([a + 1, b, thatColor, 'explode', who]);
         }
         if (b < sizex - 1) {
-            qq.unshift([a, b + 1, myColor, 'explode']);
+            qq.unshift([a, b + 1, thatColor, 'explode', who]);
         }
+        qq.unshift([a, b, thatColor, 'explode', who, 1]);
 
-        const newGrid = [...grid];
-        newGrid[a][b].p = '✸';
         setGrid(newGrid);
         setQueue(qq);
 
-        setTimeout(() => {
-            const newGrid2 = [...grid];
-            newGrid2[a][b].p = 1;
-            setGrid(newGrid2);
-        }, 500);
-
         // setTimeout(() => {
-        //     if (a > 0) {
-        //         moveDice(a - 1, b, myColor, 'explode');
-        //     }
-        // }, 1000);
-
-        // setTimeout(() => {
-        //     if (a < sizey - 1) {
-        //         moveDice(a + 1, b, myColor, 'explode');
-        //     }
-        // }, 2000);
-
-        // setTimeout(() => {
-        //     if (b > 0) {
-        //         moveDice(a, b - 1, myColor, 'explode');
-        //     }
-        // }, 3000);
-
-        // setTimeout(() => {
-        //     if (b < sizex - 1) {
-        //         moveDice(a, b + 1, myColor, 'explode');
-        //     }
-        // }, 4000);
+        //     const newGrid2 = [...grid];
+        //     newGrid2[a][b].p = 1;
+        //     setGrid(newGrid2);
+        // }, 500);
     };
 
     const boxClicked = (e, a, b) => {
-        console.log('boxClicked');
-        if (grid[a][b].c != 'limegreen') {
-            return;
-        }
-        if (queue.length) {
-            return;
+        if (multiplayer) {
+            if (grid[a][b].c != yourColor) {
+                return;
+            }
+            if (queue.length) {
+                return;
+            }
+            if (!turn) {
+                return;
+            }
         }
 
-        moveDice(a, b, grid[a][b].c);
-
-        clickedCB();
+        console.log('boxClicked ', a, b, ' setting turn false');
+        setTurn(false);
+        moveDice(a, b, grid[a][b].c, 'my move', 'me');
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,7 +259,8 @@ const Board = ({
         //if there are moves to be done in queue, do those moves. else carry on and do opponent moves
         if (qq.length > 0) {
             var next = qq.shift();
-            moveDice(next[0], next[1], next[2], next[3]);
+
+            moveDice(next[0], next[1], next[2], next[3], next[4], next[5]);
             setQueue(qq);
         } else {
             // this.setState({
@@ -243,14 +294,25 @@ const Board = ({
         };
     }, []);
 
+    // React.useEffect(() => {
+    //     setGrid(drawBoard());
+    // }, [resetBoard]);
+
     React.useEffect(() => {
-        setGrid(drawBoard());
-    }, [resetBoard]);
+        console.log('moves changed', moves.length, moves);
+        if (moves.length) {
+            const lastMove = moves[moves.length - 1];
+            const a = lastMove.x;
+            const b = lastMove.y;
+            moveDice(a, b, grid[a][b].c, 'opponents move', 'opponent');
+            console.log('settingturn true');
+        }
+    }, [moves.length]);
 
     const makeButtonOne = (a, b) => {
         if (dice == 'dice') {
-            var buttonOne = (
-                <div>
+            return (
+                <div key={`key-${a}-${b}-dice`}>
                     <button
                         className="stlpec dice"
                         style={{
@@ -265,8 +327,8 @@ const Board = ({
                 </div>
             );
         } else {
-            var buttonOne = (
-                <div>
+            return (
+                <div key={`key-${a}-${b}-number`}>
                     <button
                         className="stlpec number"
                         style={{
@@ -281,8 +343,6 @@ const Board = ({
                 </div>
             );
         }
-
-        return buttonOne;
     };
 
     const makeButtonLine = (a) => {
@@ -290,17 +350,18 @@ const Board = ({
         for (let i = 0; i < sizex; i++) {
             arr.push(makeButtonOne(a, i));
         }
-
-        var x = (
-            <div className="riadok" style={{ width: 70 * sizex }}>
+        return (
+            <div
+                key={`riadok-${a}`}
+                className="riadok"
+                style={{ width: 70 * sizex }}
+            >
                 {/* {arr} */}
                 {Array(sizex)
                     .fill()
                     .map((_, i) => makeButtonOne(a, i))}
             </div>
         );
-
-        return x;
     };
 
     const makeSquare = () => {
