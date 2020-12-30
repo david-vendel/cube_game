@@ -119,7 +119,7 @@ const MultiPlayer = () => {
     };
 
     React.useEffect(() => {
-        console.log('prevPlayersCount changed', prevPlayersCount, playersCount);
+        // console.log('prevPlayersCount changed', prevPlayersCount, playersCount);
         if (playersCount === '?' && prevPlayersCount > 0) {
             console.warn('Server offline');
             enqueueSnackbar('Server offline!', {
@@ -334,6 +334,7 @@ const MultiPlayer = () => {
             enqueueSnackbar('Game end', {
                 variant: 'warning',
             });
+            setMoves([]);
             setResetBoard((resetBoard) => resetBoard + 1);
         }
     };
@@ -396,15 +397,8 @@ const MultiPlayer = () => {
         setGameID(x);
     };
 
-    console.log('gameID mp', gameID);
-
-    const test = () => {
-        console.log('gameID test', gameID.current);
-    };
-
     const broadcast = (x, y, gridStringified) => {
-        console.log('broadcast', x, y, gameID.current);
-        test();
+        // console.log('broadcast', x, y, gameID.current);
         if (!gameID.current) {
             console.error('missing game ID');
         }
@@ -418,7 +412,7 @@ const MultiPlayer = () => {
         );
     };
 
-    console.log('multiplayer render');
+    // console.log('multiplayer render');
     return (
         <div style={{ paddingTop: 50 }}>
             <div
@@ -569,7 +563,7 @@ const MultiPlayer = () => {
             </div>
 
             {mode === 0 && <Game />}
-            {mode > 0 && (
+            {mode == 2 && (
                 <GameM
                     userID={userID}
                     player1={player1}
@@ -582,9 +576,20 @@ const MultiPlayer = () => {
                     cancelGame={cancelGame}
                     broadcast={broadcast}
                     gameID={gameID.current}
-                    resetBoard={resetBoard}
+                    key={resetBoard}
                 />
             )}
+            {/* {mode === 1 && (
+                <GameM
+                    userID={userID}
+                    player1={player1}
+                    player2={player2}
+                    clickedCB={clickedCB}
+                    notStarted={mode === 1}
+                    newGame={restartGame}
+                    cancelGame={cancelGame}
+                />
+            )} */}
 
             <div style={{ display: 'flex', marginTop: 30, marginLeft: 20 }}>
                 Broadcast:

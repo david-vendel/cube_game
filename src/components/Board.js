@@ -1,9 +1,21 @@
-import React, { Component } from 'react';
+import React, { useRef, useState } from 'react';
 import _ from 'lodash';
 
 //intro is the first line, changing between instructions, win or lose statement.
 const INTERVAL = 250;
 const STAR = '✸';
+
+function useAsyncReference(value) {
+    const ref = useRef(value);
+    const [, forceRender] = useState(false);
+
+    function updateState(newState) {
+        ref.current = newState;
+        forceRender((s) => !s);
+    }
+
+    return [ref, updateState];
+}
 
 const Board = ({
     sizex,
@@ -92,7 +104,10 @@ const Board = ({
     // };
 
     // const GRID = drawBoard();
-    const [grid, setGrid] = React.useState(GRID);
+
+    const [grid, setGrid] = useAsyncReference(GRID);
+
+    // const [grid, setGrid] = React.useState(GRID);
     const [render, setRender] = React.useState(0);
     const [queue, setQueue] = React.useState([]);
     const [gameInterval, setGameInterval] = React.useState(null);
@@ -103,6 +118,10 @@ const Board = ({
             setGrid(JSON.parse(forcedGrid));
         }
     }, [forcedGrid]);
+
+    React.useEffect(() => {
+        console.log('Board DID MOUNT');
+    }, []);
 
     // React.useEffect(() => {
     //     console.log('gamesToSend', gamesToSend);
@@ -121,14 +140,14 @@ const Board = ({
     const colorBlink = (a, b, color = 'white') => {
         // console.log('colorblink', a, b, 'color');
 
-        let newGrid = [...grid];
+        let newGrid = [...grid.current];
         newGrid[a][b].d = color;
         newGrid[a][b].buttonGrid = 56;
 
         setGrid(newGrid);
 
         setTimeout(() => {
-            let newGrid = [...grid];
+            let newGrid = [...grid.current];
             newGrid[a][b].d = 'black';
             newGrid[a][b].buttonGrid = 35;
             setGrid(newGrid);
@@ -154,7 +173,7 @@ const Board = ({
 
         // const newGrid =_.cloneDeep(grid);
         // const newGrid = [...grid];
-        const newGrid = grid.map((inner) => inner.slice());
+        const newGrid = grid.current.map((inner) => inner.slice());
 
         // var cc = this.state.c;
         // pp[a][b] = boxValue;
@@ -218,7 +237,7 @@ const Board = ({
         const qq = queue;
 
         // const newGrid = [...grid];
-        const newGrid = grid.map((inner) => inner.slice());
+        const newGrid = grid.current.map((inner) => inner.slice());
 
         newGrid[a][b].p = STAR;
 
@@ -249,7 +268,7 @@ const Board = ({
 
     const boxClicked = (e, a, b) => {
         if (multiplayer) {
-            if (grid[a][b].c != yourColor) {
+            if (grid.current[a][b].c != yourColor) {
                 return;
             }
             if (queue.length) {
@@ -266,7 +285,7 @@ const Board = ({
 
         console.log('boxClicked ', a, b, ' setting turn false');
         setTurn(false);
-        moveDice(a, b, grid[a][b].c, 'my move', 'me');
+        moveDice(a, b, grid.current[a][b].c, 'my move', 'me');
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,7 +310,7 @@ const Board = ({
         //if there are moves to be done in queue, do those moves. else carry on and do opponent moves
         if (qq.length > 0) {
             var next = qq.shift();
-
+            console.log('game cycle, ', qq, qq.length);
             moveDice(next[0], next[1], next[2], next[3], next[4], next[5]);
             setQueue(qq);
         } else {
@@ -369,18 +388,19 @@ const Board = ({
         GRID[4][4].p = 6;
 
         setGrid(GRID);
+        setQueue([]);
     };
 
     React.useEffect(() => {
-        console.log('moves changed', moves.length, moves);
-        if (moves.length) {
+        console.log('moves changed', moves?.length, moves);
+        if (moves?.length) {
             const lastMove = moves[moves.length - 1];
             const a = lastMove.x;
             const b = lastMove.y;
-            moveDice(a, b, grid[a][b].c, 'opponents move', 'opponent');
+            moveDice(a, b, grid.current[a][b].c, 'opponents move', 'opponent');
             console.log('settingturn true');
         }
-    }, [moves.length]);
+    }, [moves?.length]);
 
     const makeButtonOne = (a, b) => {
         if (dice == 'dice') {
@@ -389,13 +409,13 @@ const Board = ({
                     <button
                         className="stlpec dice"
                         style={{
-                            backgroundColor: grid[a][b].c,
-                            color: grid[a][b].d,
-                            fontSize: grid[a][b].diceGrid,
+                            backgroundColor: grid.current[a][b].c,
+                            color: grid.current[a][b].d,
+                            fontSize: grid.current[a][b].diceGrid,
                         }}
                         onClick={(e) => boxClicked(e, a, b)}
                     >
-                        {grid[a][b].p}
+                        {grid.current[a][b].p}
                     </button>
                 </div>
             );
@@ -405,13 +425,13 @@ const Board = ({
                     <button
                         className="stlpec number"
                         style={{
-                            backgroundColor: grid[a][b].c,
-                            color: grid[a][b].d,
-                            fontSize: grid[a][b].buttonGrid,
+                            backgroundColor: grid.current[a][b].c,
+                            color: grid.current[a][b].d,
+                            fontSize: grid.current[a][b].buttonGrid,
                         }}
                         onClick={(e) => boxClicked(e, a, b)}
                     >
-                        {grid[a][b].p}
+                        {grid.current[a][b].p}
                     </button>
                 </div>
             );
@@ -449,7 +469,7 @@ const Board = ({
         return arr2;
     };
 
-    console.log('board render', forcedGrid?.length, gameID);
+    // console.log('board render', forcedGrid?.length, gameID);
 
     return (
         <div>

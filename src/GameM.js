@@ -24,6 +24,10 @@ const GameM = ({
     const multiplayer = true; // this is true for multiplayer mode
 
     React.useEffect(() => {
+        console.log('GameM DID MOUNT');
+    }, []);
+
+    React.useEffect(() => {
         if (userID === player1.id) {
             console.log('you are player1');
             setYourColor('limegreen');
