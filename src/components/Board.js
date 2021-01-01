@@ -59,6 +59,7 @@ const Board = ({
                 p: 0,
                 buttonGrid: 35,
                 diceGrid: 55,
+                e: false,
             };
         });
     });
@@ -111,6 +112,7 @@ const Board = ({
     const [render, setRender] = React.useState(0);
     const [queue, setQueue] = React.useState([]);
     const [gameInterval, setGameInterval] = React.useState(null);
+    const [iteration, setIteration] = useAsyncReference(0);
 
     React.useEffect(() => {
         if (forcedGrid && forcedGrid !== '-') {
@@ -137,18 +139,36 @@ const Board = ({
     //     }
     // }, [gamesToSend]);
 
-    const colorBlink = (a, b, color = 'white') => {
-        // console.log('colorblink', a, b, 'color');
+    const colorBlink = (a, b, color = 'white', who) => {
+        console.log('colorblink', a, b, iteration.current);
 
         let newGrid = [...grid.current];
+
+        newGrid = newGrid.map((line) => {
+            return line.map((x) => {
+                if (
+                    x.iteration === iteration.current ||
+                    x.iteration + 1 === iteration.current
+                ) {
+                } else {
+                    x.e = false;
+                }
+                return x;
+            });
+        });
+
         newGrid[a][b].d = color;
         newGrid[a][b].buttonGrid = 56;
+        newGrid[a][b].iteration = iteration.current;
+
+        console.log('newgrid', newGrid);
 
         setGrid(newGrid);
 
         setTimeout(() => {
             let newGrid = [...grid.current];
             newGrid[a][b].d = 'black';
+            newGrid[a][b].e = true;
             newGrid[a][b].buttonGrid = 35;
             setGrid(newGrid);
         }, 100);
@@ -162,14 +182,17 @@ const Board = ({
 
         if (who !== 'opponent' && source !== 'explode') {
             console.log('sending to server');
-            clickedCB(a, b);
+            clickedCB(a, b, iteration.current + 1);
+            setIteration(iteration.current + 1);
         }
 
-        if (source == 'explode') {
-            colorBlink(a, b, 'red');
-        } else {
-            colorBlink(a, b, 'white');
-        }
+        setTimeout(() => {
+            if (source == 'explode') {
+                colorBlink(a, b, 'red', who);
+            } else {
+                colorBlink(a, b, 'white', who);
+            }
+        }, 10);
 
         // const newGrid =_.cloneDeep(grid);
         // const newGrid = [...grid];
@@ -209,7 +232,13 @@ const Board = ({
                 console.log('click was by you. not your turn');
                 console.log('gameID:', gameID);
                 setTurn(false);
-                broadcast(a, b, JSON.stringify(newGrid), gameID);
+                broadcast(
+                    a,
+                    b,
+                    JSON.stringify(newGrid),
+                    gameID,
+                    iteration.current
+                );
             }
         }
 
@@ -397,6 +426,7 @@ const Board = ({
             const lastMove = moves[moves.length - 1];
             const a = lastMove.x;
             const b = lastMove.y;
+            setIteration(lastMove.iteration);
             moveDice(a, b, grid.current[a][b].c, 'opponents move', 'opponent');
             console.log('settingturn true');
         }
@@ -409,7 +439,10 @@ const Board = ({
                     <button
                         className="stlpec dice"
                         style={{
-                            backgroundColor: grid.current[a][b].c,
+                            backgroundColor: makeBgColor(
+                                grid.current[a][b].c,
+                                grid.current[a][b].e
+                            ),
                             color: grid.current[a][b].d,
                             fontSize: grid.current[a][b].diceGrid,
                         }}
@@ -425,7 +458,10 @@ const Board = ({
                     <button
                         className="stlpec number"
                         style={{
-                            backgroundColor: grid.current[a][b].c,
+                            backgroundColor: makeBgColor(
+                                grid.current[a][b].c,
+                                grid.current[a][b].e
+                            ),
                             color: grid.current[a][b].d,
                             fontSize: grid.current[a][b].buttonGrid,
                         }}
@@ -469,11 +505,28 @@ const Board = ({
         return arr2;
     };
 
+    const makeBgColor = (c, e) => {
+        if (!e) {
+            if (c === 'limegreen') {
+                return 'rgb(45,200,45)';
+            }
+            if (c === 'red') {
+                return 'rgb(194,24,10)';
+            }
+        } else {
+            if (c === 'limegreen') {
+                return 'rgb(10,230,10)';
+            }
+            if (c === 'red') {
+                return 'red';
+            }
+        }
+    };
     // console.log('board render', forcedGrid?.length, gameID);
 
     return (
         <div>
-            {gameID}
+            {gameID} -- {iteration.current}
             {makeSquare()}
         </div>
     );

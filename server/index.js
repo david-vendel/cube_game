@@ -1,14 +1,10 @@
 require('dotenv').config();
 const WEBSOCKET_SERVER_PORT = process.env.WEBSOCKET_SERVER_PORT;
 const PATH_ROOT = process.env.PATH_ROOT;
+const WEBSITE_URL = process.env.WEBSITE_URL;
 const PRODUCTION_MODE = process.env.NODE_ENV === 'production';
 
 const CONSTANT = 1;
-
-// let SERVER = "http://localhost:6900";
-// if (PRODUCTION_MODE) {
-//   SERVER = "/back";
-// }
 
 console.log(
     'WEBSOCKET_SERVER_PORT',
@@ -19,16 +15,14 @@ console.log(
     PATH_ROOT
 );
 
-const webSocketsServerPort = WEBSOCKET_SERVER_PORT;
 const express = require('express');
 const app = express();
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
-const WebSocket = require('ws');
+socketIo = require('socket.io');
 
 let server;
-const uniqueIDs = [];
 gamesHistory = {};
 
 if (PRODUCTION_MODE) {
@@ -38,20 +32,45 @@ if (PRODUCTION_MODE) {
     };
     server = https.createServer(options, app);
 
+    io = socketIo(server, {
+        // path: '/chat/socket.io',
+        cors: {
+            origin: WEBSITE_URL,
+            methods: ['GET', 'POST'],
+        },
+        pingTimeout: 180000,
+        pingInterval: 2500,
+    });
+
     // const io = require('socket.io').listen(https);
 } else {
     server = http.createServer(app);
+    io = socketIo(server, {
+        // cors: {
+        //     origin: WEBSITE_URL,
+        //     methods: ['GET', 'POST'],
+        // },
+        pingTimeout: 180000,
+        pingInterval: 2500,
+    });
 }
 
-const wss = new WebSocket.Server({ server });
+// const server = http.Server(app).listn(8001);
 
-server.listen(webSocketsServerPort, () => {
-    console.log(`https- listening on *:${webSocketsServerPort}`);
-});
+const onConnection = (socket) => {
+    console.log('onConnection');
+    console.log('on connection');
 
-// const wsServer = new webSocketServer({
-//     server: https,
-// });
+    socket.emit('game.begin');
+
+    socket.on('message', (data) => {
+        console.log(data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('disconnect');
+    });
+};
 
 const clients = {}; //here we will store all the connected clients
 const clients_timeouts = {}; //here we will store all the timeouts for clients to get rid of them if they dont respon to ping pong
@@ -65,14 +84,7 @@ const getUniqueID = () => {
             .toString(16)
             .substring(1);
     let uniqueID = s4() + '_' + s4();
-    if (uniqueIDs.some((uid) => uid === uniqueID)) {
-        console.error(' ------------ UNIQUE ID DUPLICIT --------- ');
-        console.log('uniqueids', uniqueIDs);
-        uniqueID = getuniqueID();
-        return;
-    }
-    console.log('>>> Unique ID: ', uniqueID);
-    uniqueIDs.push(uniqueID);
+
     return uniqueID;
 };
 
@@ -94,60 +106,63 @@ const kickOutIfDisconnected = (userID) => {
 };
 
 resignedOrLeft = (userID, gameID, what) => {
-    if (!gameID) {
-        games.forEach((game) => {
-            if (game.active) {
-                if (
-                    game.player1?.id === userID ||
-                    game.player2?.id === userID
-                ) {
-                    gameID = game.gameID;
-                }
-            }
-        });
-    }
-
-    games.forEach((game) => {
-        if (game.gameID === gameID) {
-            game.active = false;
-            game.waiting = false;
-            if (game.player1?.id === userID) {
-                if (game.player2) {
-                    game.player2.won = true;
-                }
-            } else if (game.player2?.id === userID) {
-                if (game.player1) {
-                    game.player1.won = true;
-                }
-            }
-            const toSend = JSON.stringify({
-                type: 'leftGame',
-                gameID: game.gameID,
-                player1: game.player1,
-                player2: game.player2,
-                what: what,
-                who: userID,
-            });
-            try {
-                clients[game.player1.id].send(toSend);
-            } catch (err) {
-                console.warn('resigned game player1 send error');
-            }
-
-            try {
-                clients[game.player2.id].send(toSend);
-            } catch (err) {
-                console.warn('resigned game player2 send error');
-            }
-        }
-    });
-
-    console.log('game was finished', games.slice(-3));
+    // if (!gameID) {
+    //     games.forEach((game) => {
+    //         if (game.active) {
+    //             if (
+    //                 game.player1?.id === userID ||
+    //                 game.player2?.id === userID
+    //             ) {
+    //                 gameID = game.gameID;
+    //             }
+    //         }
+    //     });
+    // }
+    // games.forEach((game) => {
+    //     if (game.gameID === gameID) {
+    //         game.active = false;
+    //         game.waiting = false;
+    //         if (game.player1?.id === userID) {
+    //             if (game.player2) {
+    //                 game.player2.won = true;
+    //             }
+    //         } else if (game.player2?.id === userID) {
+    //             if (game.player1) {
+    //                 game.player1.won = true;
+    //             }
+    //         }
+    //         const toSend = JSON.stringify({
+    //             type: 'leftGame',
+    //             gameID: game.gameID,
+    //             player1: game.player1,
+    //             player2: game.player2,
+    //             what: what,
+    //             who: userID,
+    //         });
+    //         try {
+    //             clients[game.player1.id].send(toSend);
+    //         } catch (err) {
+    //             console.warn('resigned game player1 send error');
+    //         }
+    //         try {
+    //             clients[game.player2.id].send(toSend);
+    //         } catch (err) {
+    //             console.warn('resigned game player2 send error');
+    //         }
+    //     }
+    // });
+    // console.log('game was finished', games.slice(-3));
 };
 
 app.get('/', (req, res) => {
     console.log('hello');
     res.send('Hello World');
+    // res.sendFile(path.join(__dirname, "static", "index.html"));
+});
+
+app.get('/socket.io', (req, res) => {
+    console.log('hello socket');
+    res.send('Hello World socket');
     // res.sendFile(path.join(__dirname, "static", "index.html"));
 });
 
@@ -159,9 +174,30 @@ app.get('/', (req, res) => {
 //     ws.send('something');
 // });
 
-wss.on('connection', (ws) => {
+const emitPlayersOnlineCount = (userID) => {
+    //also ping pong
+
+    // console.log('emmit players online count', Object.keys(clients).length);
+    Object.keys(clients).forEach((key) => {
+        const client = clients[key];
+
+        try {
+            client.emit('playersCount', {
+                playersCount: Object.keys(clients).length,
+                userID: userID,
+            });
+        } catch (err) {}
+    });
+
+    // kickOutIfDisconnected(userID);
+};
+
+io.on('connection', (ws) => {
     var userID = getUniqueID();
-    console.log('Received a new connection from origin ');
+
+    // ws.onAny((event, ...args) => {
+    //     console.log(`--- got ${event}`);
+    // });
 
     clients[userID] = ws;
     console.log(
@@ -169,20 +205,106 @@ wss.on('connection', (ws) => {
         Object.getOwnPropertyNames(clients)
     );
 
-    setTimeout(() => {
-        //also ping pong
-        ws.send(
-            JSON.stringify({
-                type: 'pingpong',
-                playersCount: Object.keys(clients).length,
-                ping: true,
-                userID: userID,
-            })
+    emitPlayersOnlineCount(userID);
+
+    ws.on('disconnect', (reason) => {
+        if (reason === 'io server disconnect') {
+            // the disconnection was initiated by the server, you need to reconnect manually
+            socket.connect();
+        }
+        console.log('disconnected', userID, reason);
+        delete clients[userID];
+        emitPlayersOnlineCount(userID);
+
+        // else the socket will automatically try to reconnect
+    });
+
+    ws.on('logIn', (message) => {
+        console.log(
+            'login - user ',
+            message.name,
+            ' requested a game. games are: ',
+            games.slice(-3)
         );
+        // pairs.push(userID);
 
-        kickOutIfDisconnected(userID);
-    }, 30);
+        if (
+            games.length &&
+            games[games.length - 1].waiting &&
+            games[games.length - 1].active
+        ) {
+            console.log('There exists a waiting game. I add you in.');
+            games[games.length - 1].player2 = {
+                id: userID,
+                name: message.name,
+                active: true,
+            };
+            games[games.length - 1].waiting = false;
+            const thisGame = games[games.length - 1];
 
+            try {
+                clients[thisGame.player1.id].send(
+                    JSON.stringify({
+                        type: 'logIn',
+                        status: 200,
+                        waiting: false,
+                        userID: thisGame.player1.id,
+                        player1: thisGame.player1,
+                        player2: thisGame.player2,
+                        gameID: thisGame.gameID,
+                    })
+                );
+            } catch (err) {
+                console.warn('error player1', err);
+            }
+
+            try {
+                console.log('thisGame', thisGame, thisGame.player1);
+                clients[thisGame.player2.id].send(
+                    JSON.stringify({
+                        type: 'logIn',
+                        status: 200,
+                        waiting: false,
+                        userID: thisGame.player2.id,
+                        player1: thisGame.player1,
+                        player2: thisGame.player2,
+                        gameID: thisGame.gameID,
+                    })
+                );
+            } catch (err) {
+                console.warn('error player2', err);
+            }
+        } else {
+            console.log('There is no waiting game > create');
+            games = [...games];
+            const newGame = {
+                player1: {
+                    id: userID,
+                    name: message.userID,
+                    active: true,
+                },
+                waiting: true,
+                gameID: getUniqueID(),
+                active: true,
+            };
+            games.push(newGame);
+
+            try {
+                ws.send(
+                    JSON.stringify({
+                        type: 'logIn',
+                        status: 200,
+                        waiting: true,
+                        userID: userID,
+                        gameID: newGame.gameID,
+                        player1: newGame.player1,
+                    })
+                );
+            } catch (err) {
+                console.warn('error sitting player to wait', err);
+            }
+        }
+    });
     ws.on('message', function (message) {
         // console.log(getUniqueID());
         const parsedMessage = JSON.parse(message);
@@ -193,92 +315,6 @@ wss.on('connection', (ws) => {
                 parsedMessage,
                 parsedMessage?.type
             );
-        }
-        if (JSON.parse(message).type === 'logIn') {
-            console.log(
-                'login - user ',
-                parsedMessage.userID,
-                ' requested a game. games are: ',
-                games.slice(-3)
-            );
-            // pairs.push(userID);
-
-            if (
-                games.length &&
-                games[games.length - 1].waiting &&
-                games[games.length - 1].active
-            ) {
-                console.log('There exists a waiting game. I add you in.');
-                games[games.length - 1].player2 = {
-                    id: userID,
-                    name: parsedMessage.userID,
-                    active: true,
-                };
-                games[games.length - 1].waiting = false;
-                const thisGame = games[games.length - 1];
-
-                try {
-                    clients[thisGame.player1.id].send(
-                        JSON.stringify({
-                            type: 'logIn',
-                            status: 200,
-                            waiting: false,
-                            userID: thisGame.player1.id,
-                            player1: thisGame.player1,
-                            player2: thisGame.player2,
-                            gameID: thisGame.gameID,
-                        })
-                    );
-                } catch (err) {
-                    console.warn('error player1', err);
-                }
-
-                try {
-                    console.log('thisGame', thisGame, thisGame.player1);
-                    clients[thisGame.player2.id].send(
-                        JSON.stringify({
-                            type: 'logIn',
-                            status: 200,
-                            waiting: false,
-                            userID: thisGame.player2.id,
-                            player1: thisGame.player1,
-                            player2: thisGame.player2,
-                            gameID: thisGame.gameID,
-                        })
-                    );
-                } catch (err) {
-                    console.warn('error player2', err);
-                }
-            } else {
-                console.log('There is no waiting game > create');
-                games = [...games];
-                const newGame = {
-                    player1: {
-                        id: userID,
-                        name: parsedMessage.userID,
-                        active: true,
-                    },
-                    waiting: true,
-                    gameID: getUniqueID(),
-                    active: true,
-                };
-                games.push(newGame);
-
-                try {
-                    clients[userID].send(
-                        JSON.stringify({
-                            type: 'logIn',
-                            status: 200,
-                            waiting: true,
-                            userID: userID,
-                            gameID: newGame.gameID,
-                            player1: newGame.player1,
-                        })
-                    );
-                } catch (err) {
-                    console.warn('error sitting player to wait', err);
-                }
-            }
         }
 
         // if (JSON.parse(message).type === 'message') {
@@ -367,6 +403,7 @@ wss.on('connection', (ws) => {
                                     gameID: game.gameID,
                                     x: parsedMessage.x,
                                     y: parsedMessage.y,
+                                    iteration: parsedMessage.iteration,
                                 })
                             );
                         } catch (err) {
@@ -394,6 +431,7 @@ wss.on('connection', (ws) => {
                 gamesToSend.push({
                     gameID: g.gameID,
                     grid: gamesHistory[g.gameID],
+                    iteration: parsedMessage.iteration,
                 });
             });
 
@@ -410,26 +448,30 @@ wss.on('connection', (ws) => {
             });
         }
 
-        if (JSON.parse(message).type === 'pingpong') {
-            const userID = parsedMessage.userID;
-            // console.log('pingpong', userID);
+        // if (JSON.parse(message).type === 'pingpong') {
+        //     const userID = parsedMessage.userID;
+        //     // console.log('pingpong', userID);
 
-            setTimeout(() => {
-                try {
-                    clients[userID].send(
-                        JSON.stringify({
-                            type: 'pingpong',
-                            playersCount: Object.keys(clients).length,
-                            ping: true,
-                            userID: userID,
-                        })
-                    );
-                } catch (err) {
-                    console.warn('couldnt send pingpong to', userID);
-                }
-            }, 1000 * CONSTANT);
+        //     setTimeout(() => {
+        //         try {
+        //             clients[userID].send(
+        //                 JSON.stringify({
+        //                     type: 'pingpong',
+        //                     playersCount: Object.keys(clients).length,
+        //                     ping: true,
+        //                     userID: userID,
+        //                 })
+        //             );
+        //         } catch (err) {
+        //             console.warn('couldnt send pingpong to', userID);
+        //         }
+        //     }, 1000 * CONSTANT);
 
-            kickOutIfDisconnected(userID);
-        }
+        //     kickOutIfDisconnected(userID);
+        // }
     });
+});
+
+server.listen(WEBSOCKET_SERVER_PORT, () => {
+    console.log(`https- listening on *:${WEBSOCKET_SERVER_PORT}`);
 });

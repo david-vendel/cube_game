@@ -2,27 +2,30 @@ import React, { useRef, useState } from 'react';
 import './App.css';
 import Game from './Game';
 import GameM from './GameM';
-import Pair from './components/Pair';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
-import { w3cwebsocket as W3CWebSocket } from 'websocket';
-import Snackbar from '@material-ui/core/Snackbar';
 import { useSnackbar } from 'notistack';
 import Board from './components/Board';
+import io from 'socket.io-client';
 
 const PRODUCTION_MODE = process.env.NODE_ENV === 'production';
 
-const WEBSOCKET_URL = PRODUCTION_MODE
-    ? 'wss://davidvendel.com/ws/'
-    : 'ws://localhost:8001';
+const WEBSOCKET_URL = PRODUCTION_MODE ? '/' : 'http://localhost:8001';
 
 console.log('WEBSOCKET_URL', WEBSOCKET_URL);
 
-let client = new W3CWebSocket(WEBSOCKET_URL);
+// let client = new W3CWebSocket(WEBSOCKET_URL);
+const socket = io(WEBSOCKET_URL, {
+    secure: true,
+    rejectUnauthorized: false,
+    path: PRODUCTION_MODE ? '/socket.io' : '',
+});
+
 let timeout;
 const CONSTANT = 1;
 const EMPTY_PLAYER = { id: null, name: '?', active: false };
+const USERNAME = 'cube_game_username';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -60,13 +63,12 @@ function useAsyncReference(value) {
 const MultiPlayer = () => {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
+    const [userName, setUserName] = React.useState('');
     const [mode, setMode] = React.useState(0);
-    const [name, setName] = React.useState(
-        'Anonym ' + Math.ceil(Math.random() * 99)
-    );
     const [userID, setUserID] = React.useState('');
     const [gameID, setGameID] = useAsyncReference('-');
     const [waiting, setWaiting] = React.useState(false);
+    const [online, setOnline] = React.useState(false);
     const [playersCount, setPlayersCount] = React.useState('?');
     const [player1, setPlayer1] = React.useState(EMPTY_PLAYER);
     const [player2, setPlayer2] = React.useState(EMPTY_PLAYER);
@@ -105,53 +107,93 @@ const MultiPlayer = () => {
     // }, [mode]);
 
     const leaveMultiplayer = (prevMode) => {
-        if (prevMode === 2) {
-            console.log('You left multiplayer, so you resigned.');
-            client.send(
-                JSON.stringify({
-                    type: 'resign',
-                    userID: userID,
-                    gameID: gameID.current,
-                })
-            );
-            restartGame();
+        // if (prevMode === 2) {
+        //     console.log('You left multiplayer, so you resigned.');
+        //     client.send(
+        //         JSON.stringify({
+        //             type: 'resign',
+        //             userID: userID,
+        //             gameID: gameID.current,
+        //         })
+        //     );
+        //     restartGame();
+        // }
+    };
+
+    console.log('socket', socket);
+
+    // React.useEffect(() => {
+    //     // console.log('prevPlayersCount changed', prevPlayersCount, playersCount);
+    //     if (playersCount === '?' && prevPlayersCount > 0) {
+    //         console.warn('Server offline');
+    //         enqueueSnackbar('Server offline!', {
+    //             variant: 'error',
+    //         });
+    //     }
+    // }, [playersCount]);
+
+    React.useEffect(() => {
+        // socket.on('connect', () => {
+        //     // either with send()
+        //     socket.send('Hello!');
+        //     console.log('connnnn');
+        //     // or with emit() and custom event names
+        //     socket.emit(
+        //         'salutations',
+        //         'Hello!',
+        //         { mr: 'john' },
+        //         Uint8Array.from([1, 2, 3, 4])
+        //     );
+        // });
+
+        // socket.on('message', () => {
+        //     console.log('message');
+        // });
+
+        setAsyncData();
+    }, []);
+
+    const setAsyncData = async () => {
+        let userNameHere = await localStorage.getItem(USERNAME);
+        console.log('userNameHere', userNameHere);
+        if (userNameHere) {
+            setUserName(userNameHere);
+        } else {
+            setUserName('Anonym ' + Math.ceil(Math.random() * 99));
         }
     };
 
     React.useEffect(() => {
-        // console.log('prevPlayersCount changed', prevPlayersCount, playersCount);
-        if (playersCount === '?' && prevPlayersCount > 0) {
-            console.warn('Server offline');
-            enqueueSnackbar('Server offline!', {
-                variant: 'error',
-            });
-        }
-    }, [playersCount]);
-
-    React.useEffect(() => {
-        client.onopen = () => {
+        console.log('DID M');
+        console.log('socket, s', socket);
+        socket.on('connect', () => {
+            setOnline(true);
             console.log('WebSocket Client Connected');
             enqueueSnackbar('Server online', {
                 variant: 'success',
                 autoHideDuration: 1300,
             });
+        });
 
-            setTimeout(() => {
-                client.send(
-                    JSON.stringify({
-                        type: 'broadcast',
-                    })
-                );
-            }, 250);
-        };
+        socket.on('disconnect', (reason) => {
+            setOnline(false);
+            console.log('WebSocket Client disconnected', reason);
+            enqueueSnackbar('Server offline' + reason, {
+                variant: 'error',
+                autoHideDuration: 1600,
+            });
+        });
 
-        client.onmessage = (message) => {
-            const dataFromServer = JSON.parse(message.data);
+        socket.on('playersCount', (message) => {
+            setPlayersCount(message.playersCount);
+        });
 
-            if (dataFromServer.type !== 'pingpong') {
+        socket.on('message', (message) => {
+            console.log('message', message);
+            const dataFromServer = JSON.parse(message);
+            if (dataFromServer.type !== 'playersCount') {
                 console.log('Got msg from server! ', dataFromServer);
             }
-
             // if (dataFromServer.type === 'message') {
             //     this.setState((state) => ({
             //         messages: [
@@ -163,7 +205,6 @@ const MultiPlayer = () => {
             //         ],
             //     }));
             // }
-
             if (dataFromServer.type === 'clicked') {
                 if (dataFromServer.gameID !== gameID.current) {
                     console.error('this is wrong game');
@@ -171,19 +212,21 @@ const MultiPlayer = () => {
                         variant: 'error',
                     });
                 }
-
                 console.log(
                     'opponent clicked',
                     dataFromServer.x,
                     dataFromServer.y
                 );
                 const newMoves = moves;
-                newMoves.push({ x: dataFromServer.x, y: dataFromServer.y });
+                newMoves.push({
+                    x: dataFromServer.x,
+                    y: dataFromServer.y,
+                    iteration: dataFromServer.iteration,
+                });
                 console.log('newMoves', newMoves);
                 setMoves(newMoves);
                 setRender((render) => render + 1);
             }
-
             if (dataFromServer.type === 'broadcast') {
                 // console.log(
                 //     'gamesToSend',
@@ -198,14 +241,12 @@ const MultiPlayer = () => {
                 setGamesToSend(dataFromServer.gamesToSend);
                 setRender((render) => render + 1);
             }
-
             if (dataFromServer.type === 'logIn') {
                 console.log('loginIS is ', dataFromServer);
                 if (dataFromServer?.status === 200) {
                     console.log('got 200');
                     setWaiting(dataFromServer.waiting);
                     setUserID(dataFromServer.userID);
-
                     if (!dataFromServer.waiting) {
                         console.log('You got an opponent!');
                         enqueueSnackbar('You got an opponent!', {
@@ -236,22 +277,18 @@ const MultiPlayer = () => {
                             active: dataFromServer.player1.active,
                         });
                     }
-
                     console.log('set gameID', dataFromServer.gameID);
                     setGameIDExernal(dataFromServer.gameID);
                 } else {
                     console.error("server didn't respond with 200 to login");
                 }
             }
-
             if (dataFromServer.type === 'leftGame') {
                 console.log('leftGame', dataFromServer, player1, player2, mode);
-
                 const who = dataFromServer.who;
                 const what = dataFromServer.what;
                 let who_name;
                 let you_what;
-
                 if (player1.id === who) {
                     who_name = player1.name;
                 }
@@ -269,50 +306,26 @@ const MultiPlayer = () => {
                 enqueueSnackbar(who_name + ' ' + what + '. ' + you_what, {
                     variant: 'info',
                 });
-
                 endGame(who_name);
             }
-
-            if (dataFromServer.type === 'pingpong') {
-                // console.log('playersCount is ', dataFromServer);
-                setPlayersCount(dataFromServer.playersCount);
-
-                client.send(
-                    JSON.stringify({
-                        type: 'pingpong',
-                        pong: true,
-                        userID: dataFromServer.userID,
-                    })
-                );
-
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    console.log("server didn't reply!");
-                    closed();
-                }, 1000 * CONSTANT + 2200);
-            }
-        };
-
-        client.onclose = () => {
-            console.log('closed');
-            closed();
-        };
+        });
     }, [player1, player2, gameID.current, mode]);
 
     const handleNameChange = (e) => {
-        setName(e.target.value);
+        setUserName(e.target.value);
     };
 
     const logMeIn = () => {
         setMode(2);
         console.log('log me in');
-
-        client.send(
-            JSON.stringify({
-                type: 'logIn',
-                userID: name,
-            })
-        );
+        localStorage.setItem(USERNAME, userName);
+        socket.emit('logIn', { name: userName });
+        // client.send(
+        //     JSON.stringify({
+        //         type: 'logIn',
+        //         userID: name,
+        //     })
+        // );
 
         // this.setState({ isLoggedIn: true, userName: value, loading: true })
     };
@@ -324,7 +337,7 @@ const MultiPlayer = () => {
             setTimeout(() => {
                 setLost(null);
             }, 100);
-            setMode(1);
+            setMode(2);
             console.log('set gameID', null);
 
             // setGameID(null);
@@ -344,52 +357,39 @@ const MultiPlayer = () => {
     };
 
     const cancelGame = () => {
-        client.send(
-            JSON.stringify({
-                type: 'cancel',
-                userID: name,
-                gameID: gameID.current,
-            })
-        );
+        // client.send(
+        //     JSON.stringify({
+        //         type: 'cancel',
+        //         userID: name,
+        //         gameID: gameID.current,
+        //     })
+        // );
 
         restartGame();
     };
 
     const closed = () => {
         console.warn('closed');
-        setMode(0);
-        setPlayer1(EMPTY_PLAYER);
-        setPlayer2(EMPTY_PLAYER);
+        // setMode(0);
+        // setPlayer1(EMPTY_PLAYER);
+        // setPlayer2(EMPTY_PLAYER);
         setPlayersCount('?');
-        setInterval(() => {
-            reconnect();
-        }, 5000 * CONSTANT);
+        setOnline(false);
     };
 
-    const reconnect = () => {
-        console.log('reconnect');
-        // client = new W3CWebSocket('ws://127.0.0.1:8000');
-        // client.send(
-        //     JSON.stringify({
-        //         type: 'pingpong',
-        //         pong: true,
-        //         userID: userID,
-        //     })
-        // );
-    };
-
-    const clickedCB = (x, y) => {
+    const clickedCB = (x, y, iteration) => {
         console.log('clickedCB', x, y);
 
-        client.send(
-            JSON.stringify({
-                type: 'clicked',
-                x: x,
-                y: y,
-                userID: userID,
-                gameID: gameID.current,
-            })
-        );
+        // client.send(
+        //     JSON.stringify({
+        //         type: 'clicked',
+        //         x: x,
+        //         y: y,
+        //         userID: userID,
+        //         gameID: gameID.current,
+        //         iteration,
+        //     })
+        // );
     };
 
     const setGameIDExernal = (x) => {
@@ -397,19 +397,20 @@ const MultiPlayer = () => {
         setGameID(x);
     };
 
-    const broadcast = (x, y, gridStringified) => {
+    const broadcast = (x, y, gridStringified, iteration) => {
         // console.log('broadcast', x, y, gameID.current);
         if (!gameID.current) {
             console.error('missing game ID');
         }
 
-        client.send(
-            JSON.stringify({
-                type: 'broadcast',
-                gameID: gameID.current,
-                grid: gridStringified,
-            })
-        );
+        // client.send(
+        //     JSON.stringify({
+        //         type: 'broadcast',
+        //         gameID: gameID.current,
+        //         grid: gridStringified,
+        //         iteration,
+        //     })
+        // );
     };
 
     // console.log('multiplayer render');
@@ -427,12 +428,11 @@ const MultiPlayer = () => {
                             width: 10,
                             height: 10,
                             borderRadius: '50%',
-                            backgroundColor:
-                                playersCount === '?' ? 'red' : 'green',
+                            backgroundColor: !online ? 'red' : 'green',
                             margin: 8,
                         }}
                     ></div>
-                    {playersCount === '?' ? (
+                    {!online ? (
                         <span>Offline</span>
                     ) : (
                         <span>Number of players online: {playersCount}</span>
@@ -498,7 +498,7 @@ const MultiPlayer = () => {
                             InputProps={{
                                 className: classes.input,
                             }}
-                            value={name}
+                            value={userName}
                             onChange={handleNameChange}
                         />
                         <div
@@ -529,11 +529,13 @@ const MultiPlayer = () => {
                                 justifyContent: 'center',
                                 marginTop: 10,
                             }}
+                            onClick={() => {
+                                setMode(1);
+                            }}
                         >
                             Playing as&nbsp;
-                            <b>
-                                {name} {userID}
-                            </b>
+                            <b>{userName}</b>&nbsp;({userID})&nbsp;{' '}
+                            <span>[change]</span>{' '}
                         </div>
                         <div
                             style={{
@@ -605,11 +607,6 @@ const MultiPlayer = () => {
             >
                 {gamesToSend &&
                     JSON.parse(gamesToSend).map((game) => {
-                        console.log(
-                            'multiplayer mapping games',
-                            game.gameID,
-                            game.grid?.length
-                        );
                         return (
                             <div key={game.gameID} style={{ margin: 10 }}>
                                 <div>game&nbsp;{game.gameID}</div>
