@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import _ from 'lodash';
 
 //intro is the first line, changing between instructions, win or lose statement.
-const INTERVAL = 250;
+const INTERVAL = 120;
 const STAR = '✸';
 
 function useAsyncReference(value) {
@@ -232,13 +232,15 @@ const Board = ({
                 console.log('click was by you. not your turn');
                 console.log('gameID:', gameID);
                 setTurn(false);
-                broadcast(
-                    a,
-                    b,
-                    JSON.stringify(newGrid),
-                    gameID,
-                    iteration.current
-                );
+                setTimeout(() => {
+                    broadcast(
+                        a,
+                        b,
+                        JSON.stringify(newGrid),
+                        gameID,
+                        iteration.current
+                    );
+                }, 100);
             }
         }
 

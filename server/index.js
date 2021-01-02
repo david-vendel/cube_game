@@ -23,7 +23,7 @@ const http = require('http');
 socketIo = require('socket.io');
 
 let server;
-gamesHistory = {};
+let io;
 
 if (PRODUCTION_MODE) {
     const options = {
@@ -39,21 +39,23 @@ if (PRODUCTION_MODE) {
             methods: ['GET', 'POST'],
         },
         pingTimeout: 180000,
-        pingInterval: 2500,
+        pingInterval: 25000,
     });
 
     // const io = require('socket.io').listen(https);
 } else {
     server = http.createServer(app);
     io = socketIo(server, {
-        // cors: {
-        //     origin: WEBSITE_URL,
-        //     methods: ['GET', 'POST'],
-        // },
+        cors: {
+            origin: WEBSITE_URL,
+            methods: ['GET', 'POST'],
+        },
         pingTimeout: 180000,
         pingInterval: 2500,
     });
 }
+
+gamesHistory = {};
 
 // const server = http.Server(app).listn(8001);
 
@@ -215,18 +217,76 @@ io.on('connection', (ws) => {
         console.log('disconnected', userID, reason);
         delete clients[userID];
         emitPlayersOnlineCount(userID);
-
+        resignedOrLeft(userID, undefined, 'left');
         // else the socket will automatically try to reconnect
+    });
+
+    ws.on('echo', (message) => {
+        ws.emit('echo', message);
+    });
+
+    ws.on('clicked', (parsedMessage) => {
+        console.log(
+            'user ',
+            parsedMessage.userID,
+            ' from game ',
+            parsedMessage.gameID,
+            ' clicked',
+            parsedMessage.x,
+            parsedMessage.y
+        );
+
+        games.forEach((game) => {
+            if (game.gameID === parsedMessage.gameID) {
+                let opponent;
+                if (userID === game.player1?.id) {
+                    opponent = game.player2?.id;
+                }
+                if (userID === game.player2?.id) {
+                    opponent = game.player1?.id;
+                }
+                console.log(
+                    'opponent',
+                    opponent,
+                    ' all clients are: ',
+                    Object.keys(clients)
+                );
+                console.log('last 3 games:', games.slice(-3));
+                if (opponent) {
+                    try {
+                        console.log('sending clicked to', opponent);
+                        clients[opponent].emit('clicked', {
+                            who: userID,
+                            gameID: game.gameID,
+                            x: parsedMessage.x,
+                            y: parsedMessage.y,
+                            iteration: parsedMessage.iteration,
+                        });
+                    } catch (err) {
+                        console.log('error opponent send');
+                    }
+                } else {
+                    console.warn(
+                        'opponent was not found. last 3 games:',
+                        games.slice(-3)
+                    );
+                }
+            }
+        });
     });
 
     ws.on('logIn', (message) => {
         console.log(
             'login - user ',
-            message.name,
+            message.userName,
             ' requested a game. games are: ',
             games.slice(-3)
         );
         // pairs.push(userID);
+        if (!message.userName) {
+            console.error('no username in message');
+            return;
+        }
 
         if (
             games.length &&
@@ -236,80 +296,102 @@ io.on('connection', (ws) => {
             console.log('There exists a waiting game. I add you in.');
             games[games.length - 1].player2 = {
                 id: userID,
-                name: message.name,
+                name: message.userName,
                 active: true,
             };
             games[games.length - 1].waiting = false;
             const thisGame = games[games.length - 1];
 
             try {
-                clients[thisGame.player1.id].send(
-                    JSON.stringify({
-                        type: 'logIn',
-                        status: 200,
-                        waiting: false,
-                        userID: thisGame.player1.id,
-                        player1: thisGame.player1,
-                        player2: thisGame.player2,
-                        gameID: thisGame.gameID,
-                    })
-                );
+                clients[thisGame.player1.id].emit('logIn', {
+                    status: 200,
+                    waiting: false,
+                    userID: thisGame.player1.id,
+                    player1: thisGame.player1,
+                    player2: thisGame.player2,
+                    gameID: thisGame.gameID,
+                });
             } catch (err) {
                 console.warn('error player1', err);
             }
 
             try {
                 console.log('thisGame', thisGame, thisGame.player1);
-                clients[thisGame.player2.id].send(
-                    JSON.stringify({
-                        type: 'logIn',
-                        status: 200,
-                        waiting: false,
-                        userID: thisGame.player2.id,
-                        player1: thisGame.player1,
-                        player2: thisGame.player2,
-                        gameID: thisGame.gameID,
-                    })
-                );
+                clients[thisGame.player2.id].emit('logIn', {
+                    status: 200,
+                    waiting: false,
+                    userID: thisGame.player2.id,
+                    player1: thisGame.player1,
+                    player2: thisGame.player2,
+                    gameID: thisGame.gameID,
+                });
             } catch (err) {
                 console.warn('error player2', err);
             }
         } else {
             console.log('There is no waiting game > create');
             games = [...games];
+
+            const player1 = {
+                id: userID,
+                name: message.userName,
+                active: true,
+            };
+
             const newGame = {
-                player1: {
-                    id: userID,
-                    name: message.userID,
-                    active: true,
-                },
-                waiting: true,
                 gameID: getUniqueID(),
+                player1: player1,
+                waiting: true,
                 active: true,
             };
             games.push(newGame);
 
             try {
-                ws.send(
-                    JSON.stringify({
-                        type: 'logIn',
-                        status: 200,
-                        waiting: true,
-                        userID: userID,
-                        gameID: newGame.gameID,
-                        player1: newGame.player1,
-                    })
-                );
+                ws.emit('login', {
+                    status: 200,
+                    waiting: true,
+                    userID: userID,
+                    gameID: newGame.gameID,
+                    player1: newGame.player1,
+                });
             } catch (err) {
                 console.warn('error sitting player to wait', err);
             }
         }
     });
+
+    ws.on('broadcast', (message) => {
+        console.log('broadcast  from game ', message.gameID);
+
+        if (message.grid) {
+            gamesHistory[message.gameID] = message.grid;
+        }
+
+        let gamesToSend = [];
+        games.slice(-2).forEach((g) => {
+            gamesToSend.push({
+                gameID: g.gameID,
+                grid: gamesHistory[g.gameID],
+                iteration: message.iteration,
+            });
+        });
+
+        const keys = Object.keys(clients);
+
+        keys.forEach((key) => {
+            clients[key].emit('broadcast', {
+                gameID: message.gameID,
+                // grid: message.grid,
+                gamesToSend: JSON.stringify(gamesToSend),
+            });
+        });
+    });
+
     ws.on('message', function (message) {
         // console.log(getUniqueID());
         const parsedMessage = JSON.parse(message);
 
-        if (parsedMessage.type !== 'pingpong') {
+        if (parsedMessage.type !== 'broadcast') {
             console.log(
                 'Received Message: ',
                 parsedMessage,
@@ -365,87 +447,6 @@ io.on('connection', (ws) => {
             });
 
             console.log('games', games);
-        }
-
-        if (JSON.parse(message).type === 'clicked') {
-            console.log(
-                'user ',
-                parsedMessage.userID,
-                ' from game ',
-                parsedMessage.gameID,
-                ' clicked',
-                parsedMessage.x,
-                parsedMessage.y
-            );
-
-            games.forEach((game) => {
-                if (game.gameID === parsedMessage.gameID) {
-                    let opponent;
-                    if (userID === game.player1?.id) {
-                        opponent = game.player2?.id;
-                    }
-                    if (userID === game.player2?.id) {
-                        opponent = game.player1?.id;
-                    }
-                    console.log(
-                        'opponent',
-                        opponent,
-                        ' all clients are: ',
-                        Object.keys(clients)
-                    );
-                    console.log('last 3 games:', games.slice(-3));
-                    if (opponent) {
-                        try {
-                            clients[opponent].send(
-                                JSON.stringify({
-                                    type: 'clicked',
-                                    who: userID,
-                                    gameID: game.gameID,
-                                    x: parsedMessage.x,
-                                    y: parsedMessage.y,
-                                    iteration: parsedMessage.iteration,
-                                })
-                            );
-                        } catch (err) {
-                            console.log('error opponent send');
-                        }
-                    } else {
-                        console.warn(
-                            'opponent was not found. last 3 games:',
-                            games.slice(-3)
-                        );
-                    }
-                }
-            });
-        }
-
-        if (parsedMessage.type === 'broadcast') {
-            console.log('broadcast  from game ', parsedMessage.gameID);
-
-            if (parsedMessage.grid) {
-                gamesHistory[parsedMessage.gameID] = parsedMessage.grid;
-            }
-
-            let gamesToSend = [];
-            games.slice(-2).forEach((g) => {
-                gamesToSend.push({
-                    gameID: g.gameID,
-                    grid: gamesHistory[g.gameID],
-                    iteration: parsedMessage.iteration,
-                });
-            });
-
-            const keys = Object.keys(clients);
-            keys.forEach((key) => {
-                clients[key].send(
-                    JSON.stringify({
-                        type: 'broadcast',
-                        gameID: parsedMessage.gameID,
-                        // grid: parsedMessage.grid,
-                        gamesToSend: JSON.stringify(gamesToSend),
-                    })
-                );
-            });
         }
 
         // if (JSON.parse(message).type === 'pingpong') {

@@ -8,19 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { useSnackbar } from 'notistack';
 import Board from './components/Board';
 import io from 'socket.io-client';
-
-const PRODUCTION_MODE = process.env.NODE_ENV === 'production';
-
-const WEBSOCKET_URL = PRODUCTION_MODE ? '/' : 'http://localhost:8001';
-
-console.log('WEBSOCKET_URL', WEBSOCKET_URL);
-
-// let client = new W3CWebSocket(WEBSOCKET_URL);
-const socket = io(WEBSOCKET_URL, {
-    secure: true,
-    rejectUnauthorized: false,
-    path: PRODUCTION_MODE ? '/socket.io' : '',
-});
+import { socket } from './service/socket';
 
 let timeout;
 const CONSTANT = 1;
@@ -92,66 +80,19 @@ const MultiPlayer = () => {
         return ref.current;
     }
 
-    // React.useEffect(() => {
-    //     // console.log('mode changed', mode, prevMode);
-    //     if (mode !== prevMode && prevMode === 2) {
-    //         console.log('You left multiplayer, so you resigned.');
-    //         client.send(
-    //             JSON.stringify({
-    //                 type: 'resign',
-    //                 userID: userID,
-    //                 gameID: gameID,
-    //             })
-    //         );
-    //     }
-    // }, [mode]);
-
     const leaveMultiplayer = (prevMode) => {
-        // if (prevMode === 2) {
-        //     console.log('You left multiplayer, so you resigned.');
-        //     client.send(
-        //         JSON.stringify({
-        //             type: 'resign',
-        //             userID: userID,
-        //             gameID: gameID.current,
-        //         })
-        //     );
-        //     restartGame();
-        // }
+        if (prevMode === 2) {
+            console.log('You left multiplayer, so you resigned.');
+            socket.send(
+                JSON.stringify({
+                    type: 'resign',
+                    userID: userID,
+                    gameID: gameID.current,
+                })
+            );
+            restartGame();
+        }
     };
-
-    console.log('socket', socket);
-
-    // React.useEffect(() => {
-    //     // console.log('prevPlayersCount changed', prevPlayersCount, playersCount);
-    //     if (playersCount === '?' && prevPlayersCount > 0) {
-    //         console.warn('Server offline');
-    //         enqueueSnackbar('Server offline!', {
-    //             variant: 'error',
-    //         });
-    //     }
-    // }, [playersCount]);
-
-    React.useEffect(() => {
-        // socket.on('connect', () => {
-        //     // either with send()
-        //     socket.send('Hello!');
-        //     console.log('connnnn');
-        //     // or with emit() and custom event names
-        //     socket.emit(
-        //         'salutations',
-        //         'Hello!',
-        //         { mr: 'john' },
-        //         Uint8Array.from([1, 2, 3, 4])
-        //     );
-        // });
-
-        // socket.on('message', () => {
-        //     console.log('message');
-        // });
-
-        setAsyncData();
-    }, []);
 
     const setAsyncData = async () => {
         let userNameHere = await localStorage.getItem(USERNAME);
@@ -164,8 +105,13 @@ const MultiPlayer = () => {
     };
 
     React.useEffect(() => {
-        console.log('DID M');
-        console.log('socket, s', socket);
+        socket.on('echo', (message) => {
+            enqueueSnackbar(message, {
+                variant: 'success',
+                autoHideDuration: 1300,
+            });
+            setOnline(true);
+        });
         socket.on('connect', () => {
             setOnline(true);
             console.log('WebSocket Client Connected');
@@ -184,64 +130,47 @@ const MultiPlayer = () => {
             });
         });
 
-        socket.on('playersCount', (message) => {
-            setPlayersCount(message.playersCount);
+        socket.on('clicked', (dataFromServer) => {
+            console.log('clicked', dataFromServer);
+
+            if (dataFromServer.gameID !== gameID.current) {
+                console.error('this is wrong game');
+                enqueueSnackbar('this is wrong game', {
+                    variant: 'error',
+                });
+            }
+            console.log(
+                'opponent - ',
+                dataFromServer.who,
+                '  clicked',
+                dataFromServer.x,
+                dataFromServer.y
+            );
+            const newMoves = moves;
+            newMoves.push({
+                x: dataFromServer.x,
+                y: dataFromServer.y,
+                iteration: dataFromServer.iteration,
+            });
+            console.log('newMoves', newMoves);
+            setMoves(newMoves);
+            setRender((render) => render + 1);
         });
 
-        socket.on('message', (message) => {
-            console.log('message', message);
-            const dataFromServer = JSON.parse(message);
-            if (dataFromServer.type !== 'playersCount') {
-                console.log('Got msg from server! ', dataFromServer);
-            }
-            // if (dataFromServer.type === 'message') {
-            //     this.setState((state) => ({
-            //         messages: [
-            //             ...state.messages,
-            //             {
-            //                 msg: dataFromServer.msg,
-            //                 user: dataFromServer.user,
-            //             },
-            //         ],
-            //     }));
-            // }
-            if (dataFromServer.type === 'clicked') {
-                if (dataFromServer.gameID !== gameID.current) {
-                    console.error('this is wrong game');
-                    enqueueSnackbar('this is wrong game', {
-                        variant: 'error',
-                    });
-                }
-                console.log(
-                    'opponent clicked',
-                    dataFromServer.x,
-                    dataFromServer.y
-                );
-                const newMoves = moves;
-                newMoves.push({
-                    x: dataFromServer.x,
-                    y: dataFromServer.y,
-                    iteration: dataFromServer.iteration,
-                });
-                console.log('newMoves', newMoves);
-                setMoves(newMoves);
-                setRender((render) => render + 1);
-            }
-            if (dataFromServer.type === 'broadcast') {
-                // console.log(
-                //     'gamesToSend',
-                //     dataFromServer.gameID,
-                //     dataFromServer.gamesToSend
-                // );
-                // setGrid(dataFromServer.grid);
-                console.log(
-                    'received broadcast',
-                    dataFromServer?.gamesToSend?.length
-                );
-                setGamesToSend(dataFromServer.gamesToSend);
-                setRender((render) => render + 1);
-            }
-            if (dataFromServer.type === 'logIn') {
+        setAsyncData();
+
+        return () => socket.disconnect();
+    }, []);
+
+    React.useEffect(
+        () => {
+            console.log('CDU ');
+
+            socket.on('playersCount', (message) => {
+                setPlayersCount(message.playersCount);
+            });
+
+            socket.on('logIn', (dataFromServer) => {
                 console.log('loginIS is ', dataFromServer);
                 if (dataFromServer?.status === 200) {
                     console.log('got 200');
@@ -282,34 +211,77 @@ const MultiPlayer = () => {
                 } else {
                     console.error("server didn't respond with 200 to login");
                 }
-            }
-            if (dataFromServer.type === 'leftGame') {
-                console.log('leftGame', dataFromServer, player1, player2, mode);
-                const who = dataFromServer.who;
-                const what = dataFromServer.what;
-                let who_name;
-                let you_what;
-                if (player1.id === who) {
-                    who_name = player1.name;
+            });
+
+            socket.on('broadcast', (dataFromServer) => {
+                console.log(
+                    'received broadcast',
+                    dataFromServer?.gamesToSend?.length
+                );
+                setGamesToSend(dataFromServer.gamesToSend);
+                setRender((render) => render + 1);
+            });
+
+            socket.on('message', (message) => {
+                console.log('message', message);
+                const dataFromServer = JSON.parse(message);
+                if (dataFromServer.type !== 'playersCount') {
+                    console.log('Got msg from server! ', dataFromServer);
                 }
-                if (player2.id === who) {
-                    who_name = player2.name;
-                }
-                if (who === userID) {
-                    you_what = 'You lost!';
-                    who_name = 'You ';
-                } else {
-                    you_what = 'You won!';
-                    who_name = 'Player ' + who_name;
-                }
-                console.log(who_name + ' ' + what + '. ' + you_what);
-                enqueueSnackbar(who_name + ' ' + what + '. ' + you_what, {
-                    variant: 'info',
-                });
-                endGame(who_name);
-            }
-        });
-    }, [player1, player2, gameID.current, mode]);
+                // if (dataFromServer.type === 'message') {
+                //     this.setState((state) => ({
+                //         messages: [
+                //             ...state.messages,
+                //             {
+                //                 msg: dataFromServer.msg,
+                //                 user: dataFromServer.user,
+                //             },
+                //         ],
+                //     }));
+                // }
+
+                // if (dataFromServer.type === 'broadcast') {
+                //
+                //     // setGrid(dataFromServer.grid);
+                //     console.log(
+                //         'received broadcast',
+                //         dataFromServer?.gamesToSend?.length
+                //     );
+                //     setGamesToSend(dataFromServer.gamesToSend);
+                //     setRender((render) => render + 1);
+                // }
+
+                // if (dataFromServer.type === 'leftGame') {
+                //     console.log('leftGame', dataFromServer, player1, player2, mode);
+                //     const who = dataFromServer.who;
+                //     const what = dataFromServer.what;
+                //     let who_name;
+                //     let you_what;
+                //     if (player1.id === who) {
+                //         who_name = player1.name;
+                //     }
+                //     if (player2.id === who) {
+                //         who_name = player2.name;
+                //     }
+                //     if (who === userID) {
+                //         you_what = 'You lost!';
+                //         who_name = 'You ';
+                //     } else {
+                //         you_what = 'You won!';
+                //         who_name = 'Player ' + who_name;
+                //     }
+                //     console.log(who_name + ' ' + what + '. ' + you_what);
+                //     enqueueSnackbar(who_name + ' ' + what + '. ' + you_what, {
+                //         variant: 'info',
+                //     });
+                //     endGame(who_name);
+                // }
+            });
+        },
+        [
+            /*player1, player2, gameID.current, mode*/
+        ]
+    );
 
     const handleNameChange = (e) => {
         setUserName(e.target.value);
@@ -317,15 +289,9 @@ const MultiPlayer = () => {
 
     const logMeIn = () => {
         setMode(2);
-        console.log('log me in');
+        console.log('log me in', userName);
         localStorage.setItem(USERNAME, userName);
-        socket.emit('logIn', { name: userName });
-        // client.send(
-        //     JSON.stringify({
-        //         type: 'logIn',
-        //         userID: name,
-        //     })
-        // );
+        socket.emit('logIn', { userName: userName });
 
         // this.setState({ isLoggedIn: true, userName: value, loading: true })
     };
@@ -357,13 +323,13 @@ const MultiPlayer = () => {
     };
 
     const cancelGame = () => {
-        // client.send(
-        //     JSON.stringify({
-        //         type: 'cancel',
-        //         userID: name,
-        //         gameID: gameID.current,
-        //     })
-        // );
+        socket.send(
+            JSON.stringify({
+                type: 'cancel',
+                userID: userName,
+                gameID: gameID.current,
+            })
+        );
 
         restartGame();
     };
@@ -380,16 +346,13 @@ const MultiPlayer = () => {
     const clickedCB = (x, y, iteration) => {
         console.log('clickedCB', x, y);
 
-        // client.send(
-        //     JSON.stringify({
-        //         type: 'clicked',
-        //         x: x,
-        //         y: y,
-        //         userID: userID,
-        //         gameID: gameID.current,
-        //         iteration,
-        //     })
-        // );
+        socket.emit('clicked', {
+            x: x,
+            y: y,
+            userID: userID,
+            gameID: gameID.current,
+            iteration,
+        });
     };
 
     const setGameIDExernal = (x) => {
@@ -398,19 +361,16 @@ const MultiPlayer = () => {
     };
 
     const broadcast = (x, y, gridStringified, iteration) => {
-        // console.log('broadcast', x, y, gameID.current);
+        console.log('broadcast', x, y, gameID.current);
         if (!gameID.current) {
             console.error('missing game ID');
         }
 
-        // client.send(
-        //     JSON.stringify({
-        //         type: 'broadcast',
-        //         gameID: gameID.current,
-        //         grid: gridStringified,
-        //         iteration,
-        //     })
-        // );
+        socket.emit('broadcast', {
+            gameID: gameID.current,
+            grid: gridStringified,
+            iteration,
+        });
     };
 
     // console.log('multiplayer render');
@@ -422,7 +382,12 @@ const MultiPlayer = () => {
                     margin: '0 auto',
                 }}
             >
-                <div style={{ display: 'flex' }}>
+                <div
+                    style={{ display: 'flex' }}
+                    onClick={() => {
+                        socket.emit('echo', 'Echoes successfully');
+                    }}
+                >
                     <div
                         style={{
                             width: 10,
@@ -433,9 +398,9 @@ const MultiPlayer = () => {
                         }}
                     ></div>
                     {!online ? (
-                        <span>Offline</span>
+                        <div>Offline</div>
                     ) : (
-                        <span>Number of players online: {playersCount}</span>
+                        <div>Number of players online: {playersCount}</div>
                     )}
                 </div>
                 <div
