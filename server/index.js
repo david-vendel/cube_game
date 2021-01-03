@@ -108,52 +108,51 @@ const kickOutIfDisconnected = (userID) => {
 };
 
 resignedOrLeft = (userID, gameID, what) => {
-    // if (!gameID) {
-    //     games.forEach((game) => {
-    //         if (game.active) {
-    //             if (
-    //                 game.player1?.id === userID ||
-    //                 game.player2?.id === userID
-    //             ) {
-    //                 gameID = game.gameID;
-    //             }
-    //         }
-    //     });
-    // }
-    // games.forEach((game) => {
-    //     if (game.gameID === gameID) {
-    //         game.active = false;
-    //         game.waiting = false;
-    //         if (game.player1?.id === userID) {
-    //             if (game.player2) {
-    //                 game.player2.won = true;
-    //             }
-    //         } else if (game.player2?.id === userID) {
-    //             if (game.player1) {
-    //                 game.player1.won = true;
-    //             }
-    //         }
-    //         const toSend = JSON.stringify({
-    //             type: 'leftGame',
-    //             gameID: game.gameID,
-    //             player1: game.player1,
-    //             player2: game.player2,
-    //             what: what,
-    //             who: userID,
-    //         });
-    //         try {
-    //             clients[game.player1.id].send(toSend);
-    //         } catch (err) {
-    //             console.warn('resigned game player1 send error');
-    //         }
-    //         try {
-    //             clients[game.player2.id].send(toSend);
-    //         } catch (err) {
-    //             console.warn('resigned game player2 send error');
-    //         }
-    //     }
-    // });
-    // console.log('game was finished', games.slice(-3));
+    if (!gameID) {
+        games.forEach((game) => {
+            if (game.active) {
+                if (
+                    game.player1?.id === userID ||
+                    game.player2?.id === userID
+                ) {
+                    gameID = game.gameID;
+                }
+            }
+        });
+    }
+    games.forEach((game) => {
+        if (game.gameID === gameID) {
+            game.active = false;
+            game.waiting = false;
+            if (game.player1?.id === userID) {
+                if (game.player2) {
+                    game.player2.won = true;
+                }
+            } else if (game.player2?.id === userID) {
+                if (game.player1) {
+                    game.player1.won = true;
+                }
+            }
+            const toSend = {
+                gameID: game.gameID,
+                player1: game.player1,
+                player2: game.player2,
+                what: what,
+                who: userID,
+            };
+            try {
+                clients[game.player1.id].emit('leftGame', toSend);
+            } catch (err) {
+                console.warn('resigned game player1 send error');
+            }
+            try {
+                clients[game.player2.id].emit('leftGame', toSend);
+            } catch (err) {
+                console.warn('resigned game player2 send error');
+            }
+        }
+    });
+    console.log('game was finished', games.slice(-3));
 };
 
 app.get('/', (req, res) => {

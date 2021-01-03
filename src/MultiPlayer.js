@@ -72,6 +72,8 @@ const MultiPlayer = () => {
 
     const classes = useStyles();
 
+    const [playing, setPlaying] = useState(false);
+
     function usePrevious(value) {
         const ref = React.useRef();
         React.useEffect(() => {
@@ -403,6 +405,7 @@ const MultiPlayer = () => {
                         <div>Number of players online: {playersCount}</div>
                     )}
                 </div>
+
                 <div
                     style={{
                         display: 'flex',

@@ -17,6 +17,16 @@ function useAsyncReference(value) {
     return [ref, updateState];
 }
 
+const AUDIOS = [
+    'https://freesound.org/data/previews/467/467583_9892063-lq.mp3',
+    'https://freesound.org/data/previews/421/421150_5820033-lq.mp3',
+    'https://freesound.org/data/previews/171/171104_2394245-lq.mp3',
+    'https://freesound.org/data/previews/377/377017_1172853-lq.mp3',
+];
+
+const AUDIO_HERE = AUDIOS[Math.floor(AUDIOS.length * Math.random())];
+const AUDIO_HERE_OPPONENT = AUDIOS[Math.floor(AUDIOS.length * Math.random())];
+
 const Board = ({
     sizex,
     sizey,
@@ -32,6 +42,10 @@ const Board = ({
     forcedGrid,
     gameID,
 }) => {
+    // const [audio, setAudio] = React.useState(
+    //     new Audio(AUDIOS[Math.floor(AUDIOS.length * Math.random())])
+    // );
+
     //dice is whether graphics is number or dice
 
     // const drawBoard = () => {
@@ -179,6 +193,14 @@ const Board = ({
     //parametres are: 2 coordinates, color of given move (color is changing during explosion, when player is conquering surrounding squares. color is stored in state field c. source tells if move is exploding move, to animate it accordingly)
     const moveDice = (a, b, thatColor, source = 'none', who, hardSet) => {
         console.log('dice moved', a, b, thatColor, source, who);
+
+        if (who === 'opponent') {
+            new Audio(AUDIO_HERE_OPPONENT).play();
+        } else {
+            new Audio(AUDIO_HERE).play();
+        }
+
+        // setAudio(new Audio(AUDIOS[Math.floor(AUDIOS.length * Math.random())]));
 
         if (who !== 'opponent' && source !== 'explode') {
             console.log('sending to server');
