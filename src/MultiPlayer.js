@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import './App.css';
 import Game from './Game';
 import GameM from './GameM';
+import Player from './components/Player';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
@@ -85,13 +86,10 @@ const MultiPlayer = () => {
     const leaveMultiplayer = (prevMode) => {
         if (prevMode === 2) {
             console.log('You left multiplayer, so you resigned.');
-            socket.send(
-                JSON.stringify({
-                    type: 'resign',
-                    userID: userID,
-                    gameID: gameID.current,
-                })
-            );
+            socket.emit('resign', {
+                userID: userID,
+                gameID: gameID.current,
+            });
             restartGame();
         }
     };
@@ -130,6 +128,7 @@ const MultiPlayer = () => {
                 variant: 'error',
                 autoHideDuration: 1600,
             });
+            socket.emit('disconnected', { userName, gameID });
         });
 
         socket.on('clicked', (dataFromServer) => {
@@ -224,6 +223,32 @@ const MultiPlayer = () => {
                 );
                 setGamesToSend(dataFromServer.gamesToSend);
                 setRender((render) => render + 1);
+            });
+
+            socket.on('leftGame', (dataFromServer) => {
+                console.log('leftGame', dataFromServer, player1, player2, mode);
+                const who = dataFromServer.who;
+                const what = dataFromServer.what;
+                let who_name;
+                let you_what;
+                if (player1.id === who) {
+                    who_name = player1.name;
+                }
+                if (player2.id === who) {
+                    who_name = player2.name;
+                }
+                if (who === userID) {
+                    you_what = 'You lost!';
+                    who_name = 'You ';
+                } else {
+                    you_what = 'You won!';
+                    who_name = 'Player ' + who_name;
+                }
+                console.log(who_name + ' ' + what + '. ' + you_what);
+                enqueueSnackbar(who_name + ' ' + what + '. ' + you_what, {
+                    variant: 'info',
+                });
+                endGame(who_name);
             });
 
             socket.on('message', (message) => {
@@ -364,8 +389,8 @@ const MultiPlayer = () => {
         setGameID(x);
     };
 
-    const broadcast = (x, y, gridStringified, iteration) => {
-        console.log('broadcast', x, y, gameID.current);
+    const broadcast = (x, y, gridStringified, gameIDArg, iteration) => {
+        console.log('broadcast', x, y, gameID.current, iteration);
         if (!gameID.current) {
             console.error('missing game ID');
         }
@@ -373,7 +398,7 @@ const MultiPlayer = () => {
         socket.emit('broadcast', {
             gameID: gameID.current,
             grid: gridStringified,
-            // iteration,
+            iteration,
         });
     };
 
@@ -414,12 +439,9 @@ const MultiPlayer = () => {
                         justifyContent: 'space-evenly',
                     }}
                 >
-                    <button
-                        style={{
-                            cursor: 'pointer',
-                            border: mode === 0 ? '2px solid' : '1px solid',
-                            borderRadius: 3,
-                        }}
+                    <Button
+                        color={mode !== 0 ? 'primary' : 'secondary'}
+                        variant="contained"
                         onClick={() => {
                             const prevMode = mode;
                             setMode(0);
@@ -427,24 +449,18 @@ const MultiPlayer = () => {
                         }}
                     >
                         Singleplayer
-                    </button>
+                    </Button>
                     {playersCount !== '?' ? (
-                        <button
-                            style={{
-                                cursor: 'pointer',
-                                border:
-                                    mode === 1 || mode === 2
-                                        ? '2px solid'
-                                        : '1px solid',
-                                borderRadius: 3,
-                            }}
+                        <Button
+                            color={mode === 0 ? 'primary' : 'secondary'}
+                            variant="contained"
                             onClick={() => {
                                 leaveMultiplayer(mode);
                                 setMode(1);
                             }}
                         >
                             Multiplayer
-                        </button>
+                        </Button>
                     ) : (
                         <button
                             style={{
@@ -563,7 +579,14 @@ const MultiPlayer = () => {
                 />
             )} */}
 
-            <div style={{ display: 'flex', marginTop: 30, marginLeft: 20 }}>
+            <hr style={{ margin: 20 }} />
+            <div
+                style={{
+                    display: 'flex',
+                    marginLeft: 20,
+                    fontSize: '150%',
+                }}
+            >
                 Broadcast:
             </div>
             <div
@@ -577,10 +600,19 @@ const MultiPlayer = () => {
             >
                 {gamesToSend &&
                     JSON.parse(gamesToSend).map((game) => {
+                        console.log('broadcasting game', game);
                         return (
                             <div key={game.gameID} style={{ margin: 10 }}>
-                                <div>game&nbsp;{game.gameID}</div>
-
+                                <div
+                                    style={{
+                                        textAlign: 'center',
+                                        paddingBottom: 8,
+                                    }}
+                                >
+                                    Game&nbsp;{game.gameID},{' '}
+                                    {new Date(game?.start).toLocaleString()}:
+                                </div>
+                                <Player number={1} object={game.player1} />
                                 <Board
                                     sizex={5}
                                     sizey={5}
@@ -588,6 +620,7 @@ const MultiPlayer = () => {
                                     moves={[]}
                                     forcedGrid={game.grid}
                                 />
+                                <Player number={2} object={game.player2} />
                             </div>
                         );
                     })}

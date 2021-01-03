@@ -108,6 +108,7 @@ const kickOutIfDisconnected = (userID) => {
 };
 
 resignedOrLeft = (userID, gameID, what) => {
+    console.log('resignedOrLeft', what, userID);
     if (!gameID) {
         games.forEach((game) => {
             if (game.active) {
@@ -218,6 +219,16 @@ io.on('connection', (ws) => {
         emitPlayersOnlineCount(userID);
         resignedOrLeft(userID, undefined, 'left');
         // else the socket will automatically try to reconnect
+    });
+
+    ws.on('disconnected', (message) => {
+        console.log(
+            'client disconnected ',
+            message.userID,
+            ' game(',
+            message.gameID,
+            ')'
+        );
     });
 
     ws.on('echo', (message) => {
@@ -342,6 +353,7 @@ io.on('connection', (ws) => {
                 player1: player1,
                 waiting: true,
                 active: true,
+                start: new Date().getTime(),
             };
             games.push(newGame);
 
@@ -360,20 +372,30 @@ io.on('connection', (ws) => {
     });
 
     ws.on('broadcast', (message) => {
-        console.log('broadcast  from game ', message?.gameID);
+        console.log(
+            'broadcast  from game ',
+            message?.gameID,
+            message?.iteration
+        );
 
-        if (message?.grid) {
+        if (message?.iteration && message.iteration > 1) {
             gamesHistory[message.gameID] = message.grid;
         }
 
         let gamesToSend = [];
-        games.slice(-2).forEach((g) => {
-            gamesToSend.push({
-                gameID: g.gameID,
-                grid: gamesHistory[g.gameID],
-                // iteration: message.iteration,
+        games
+            .filter((g) => gamesHistory[g.gameID])
+            .slice(-8)
+            .forEach((g) => {
+                gamesToSend.push({
+                    gameID: g.gameID,
+                    start: g.start,
+                    grid: gamesHistory[g.gameID],
+                    player1: g.player1,
+                    player2: g.player2,
+                    // iteration: message.iteration,
+                });
             });
-        });
 
         const keys = Object.keys(clients);
 

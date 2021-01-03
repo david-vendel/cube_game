@@ -37,11 +37,6 @@ const GameM = ({
         if (userID === player2.id) {
             console.log('you are player2');
             setYourColor('red');
-        } else {
-            enqueueSnackbar('You are not in any game', {
-                variant: 'error',
-                autoHideDuration: 1300,
-            });
         }
     }, [userID, player1, player2]);
 
@@ -58,7 +53,7 @@ const GameM = ({
     const sizey = 5;
     const [turn, setTurn] = React.useState(true);
     const [dice, setDice] = React.useState(diceHere);
-    const [yourColor, setYourColor] = React.useState('?');
+    const [yourColor, setYourColor] = React.useState('');
 
     const reset = () => {
         // setResetBoard(!resetBoard);
@@ -76,7 +71,7 @@ const GameM = ({
 
     return (
         <div className="App" style={{ width: 70 * sizex }}>
-            {!notStarted && (
+            {!notStarted && yourColor.length > 0 && (
                 <Intro
                     yourColor={yourColor}
                     green={green}

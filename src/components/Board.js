@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import _ from 'lodash';
 
 //intro is the first line, changing between instructions, win or lose statement.
-const INTERVAL = 120;
+const INTERVAL = 160;
 const STAR = '✸';
 
 function useAsyncReference(value) {
@@ -270,7 +270,7 @@ const Board = ({
                         gameID,
                         iteration.current
                     );
-                }, 100);
+                }, 130);
             }
         }
 
@@ -569,7 +569,7 @@ const Board = ({
 
     return (
         <div>
-            {gameID} -- {iteration.current}
+            {/* {gameID} -- {iteration.current} */}
             {makeSquare()}
         </div>
     );
