@@ -161,6 +161,8 @@ const MultiPlayer = () => {
 
         setAsyncData();
 
+        socket.emit('broadcast');
+
         return () => socket.disconnect();
     }, []);
 
@@ -371,7 +373,7 @@ const MultiPlayer = () => {
         socket.emit('broadcast', {
             gameID: gameID.current,
             grid: gridStringified,
-            iteration,
+            // iteration,
         });
     };
 

@@ -22,6 +22,14 @@ const AUDIOS = [
     'https://freesound.org/data/previews/421/421150_5820033-lq.mp3',
     'https://freesound.org/data/previews/171/171104_2394245-lq.mp3',
     'https://freesound.org/data/previews/377/377017_1172853-lq.mp3',
+    'https://freesound.org/data/previews/71/71393_685248-lq.mp3',
+    'https://freesound.org/data/previews/110/110314_1460197-lq.mp3',
+    'https://freesound.org/data/previews/51/51620_610202-lq.mp3',
+    'https://freesound.org/data/previews/41/41116_27322-lq.mp3',
+    'https://freesound.org/data/previews/13/13113_35389-lq.mp3',
+    'https://freesound.org/data/previews/322/322697_2195044-lq.mp3',
+    'https://freesound.org/data/previews/546/546069_12187289-lq.mp3',
+    'https://freesound.org/data/previews/184/184557_19852-lq.mp3',
 ];
 
 const AUDIO_HERE = AUDIOS[Math.floor(AUDIOS.length * Math.random())];
@@ -296,15 +304,26 @@ const Board = ({
 
         if (a > 0) {
             qq.unshift([a - 1, b, thatColor, 'explode', who]);
+        } else {
+            qq.unshift([5 - 1, b, thatColor, 'explode', who]);
         }
+
         if (b > 0) {
             qq.unshift([a, b - 1, thatColor, 'explode', who]);
+        } else {
+            qq.unshift([a, 5 - 1, thatColor, 'explode', who]);
         }
+
         if (a < sizey - 1) {
             qq.unshift([a + 1, b, thatColor, 'explode', who]);
+        } else {
+            qq.unshift([0, b, thatColor, 'explode', who]);
         }
+
         if (b < sizex - 1) {
             qq.unshift([a, b + 1, thatColor, 'explode', who]);
+        } else {
+            qq.unshift([a, 0, thatColor, 'explode', who]);
         }
         qq.unshift([a, b, thatColor, 'explode', who, 1]);
 

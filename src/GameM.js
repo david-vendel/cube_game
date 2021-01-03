@@ -5,6 +5,7 @@ import Bottom from './components/Bottom';
 import Player from './components/Player';
 import LoadingOverlay from 'react-loading-overlay';
 import Button from '@material-ui/core/Button';
+import { useSnackbar } from 'notistack';
 
 //intro is the first line, changing between instructions, win or lose statement.
 const GameM = ({
@@ -22,6 +23,7 @@ const GameM = ({
     resetBoard,
 }) => {
     const multiplayer = true; // this is true for multiplayer mode
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
     React.useEffect(() => {
         console.log('GameM DID MOUNT');
@@ -35,6 +37,11 @@ const GameM = ({
         if (userID === player2.id) {
             console.log('you are player2');
             setYourColor('red');
+        } else {
+            enqueueSnackbar('You are not in any game', {
+                variant: 'error',
+                autoHideDuration: 1300,
+            });
         }
     }, [userID, player1, player2]);
 
@@ -51,7 +58,7 @@ const GameM = ({
     const sizey = 5;
     const [turn, setTurn] = React.useState(true);
     const [dice, setDice] = React.useState(diceHere);
-    const [yourColor, setYourColor] = React.useState('undefined');
+    const [yourColor, setYourColor] = React.useState('?');
 
     const reset = () => {
         // setResetBoard(!resetBoard);

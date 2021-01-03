@@ -360,9 +360,9 @@ io.on('connection', (ws) => {
     });
 
     ws.on('broadcast', (message) => {
-        console.log('broadcast  from game ', message.gameID);
+        console.log('broadcast  from game ', message?.gameID);
 
-        if (message.grid) {
+        if (message?.grid) {
             gamesHistory[message.gameID] = message.grid;
         }
 
@@ -371,7 +371,7 @@ io.on('connection', (ws) => {
             gamesToSend.push({
                 gameID: g.gameID,
                 grid: gamesHistory[g.gameID],
-                iteration: message.iteration,
+                // iteration: message.iteration,
             });
         });
 
@@ -379,8 +379,6 @@ io.on('connection', (ws) => {
 
         keys.forEach((key) => {
             clients[key].emit('broadcast', {
-                gameID: message.gameID,
-                // grid: message.grid,
                 gamesToSend: JSON.stringify(gamesToSend),
             });
         });
@@ -397,22 +395,6 @@ io.on('connection', (ws) => {
                 parsedMessage?.type
             );
         }
-
-        // if (JSON.parse(message).type === 'message') {
-        //     console.log('message came', pairs_name, JSON.parse(message).user);
-
-        //     for (let i = 0; i < pairs.length; i++) {
-        //         if (JSON.parse(message).user === pairs_name[i]) {
-        //             clients[pairs[i]].send(message);
-        //             clients[pairs[i]].close();
-        //             if (i % 2 === 0) {
-        //                 clients[pairs[i + 1]].send(message);
-        //             } else {
-        //                 clients[pairs[i - 1]].send(message);
-        //             }
-        //         }
-        //     }
-        // }
 
         if (JSON.parse(message).type === 'resign') {
             console.log(
